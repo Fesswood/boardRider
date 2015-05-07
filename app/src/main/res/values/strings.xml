@@ -6,4 +6,6 @@
     <string name="title_activity_board_rider">BoardRider</string>
     <string name="refresh_started">Загружаем Новости</string>
     <string name="refresh_finished">Загрузка завершена</string>
+    <string name="error_load_data">Загрузка данных завершилась с ошибкой. Попробуйте еще раз.</string>
+    <string name="title_activity_board_news">boardNewsActivity</string>
 </resources>
