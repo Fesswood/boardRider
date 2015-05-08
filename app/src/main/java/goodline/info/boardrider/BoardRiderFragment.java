@@ -70,7 +70,7 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
                     public void run() {
                         mSwipyRefreshLayout.setRefreshing(false);
                         if (dir == SwipyRefreshLayoutDirection.BOTTOM) {
-                            fetch(mPageIndex, true);
+                            fetch(mPageIndex,true,true);
                         } else {
                             update();
                         }
@@ -85,7 +85,7 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
         mListView = (ListView) getView().findViewById(R.id.news_list);
         mListView.setAdapter(mAdapter);
         mListView.setOnItemClickListener(this);
-        fetch(1, false);
+        fetch(1, false, false);
     }
 
     @Override
@@ -128,8 +128,8 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
         VolleyApplication.getInstance().getRequestQueue().add(stringRequest);
     }
 
-    private void fetch(int startpage, boolean needScroll){
-        final boolean isScrollneed=needScroll;
+    private void fetch(int startpage, boolean isScrollNeeded, boolean isNextPageNeeded){
+        final boolean isScrollneed=isScrollNeeded;
         StringRequest stringRequest;
         for (int i=startpage; i<mPageIndex+1; i++){
                  stringRequest = new StringRequest(Request.Method.GET, mBoardUrl+i,
@@ -154,12 +154,14 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     Toast.makeText(getActivity(),  R.string.error_load_data, Toast.LENGTH_SHORT).show();
-                    Log.e(TAG, error.getMessage());
+                    Log.e(TAG,"error "+error.getMessage());
                 }
             });
             VolleyApplication.getInstance().getRequestQueue().add(stringRequest);
         }
-        mPageIndex++;
+      if(isNextPageNeeded || mPageIndex==1){
+          mPageIndex++;
+      }
     }
 
     private ArrayList<BoardNews> parse(String HTML){
@@ -172,18 +174,29 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
             Log.e(null,e.getMessage(),e);
         }
         Elements articles = doc.select(".list-topic .topic.topic-type-topic.js-topic.out-topic");
-        String imageUrl,articleTitle,articleUrl,articleDate;
-        Elements titleElemet,imageElement, timeElement;
+        String imageUrl,
+               articleTitle,
+               articleUrl,
+               articleDate;
+        StringBuffer smallDesc=new StringBuffer(150);
+        Elements pageElement;
         for (Element article : articles) {
-            titleElemet = article.select(".topic-title a");
-            articleTitle=titleElemet.text();
-            articleUrl=titleElemet.attr("href");
-            imageElement = article.select(".preview img");
-            imageUrl= imageElement.attr("src");
-            timeElement = article.select(".topic-header time");
-            articleDate=timeElement.text();
-            BoardNews parsedNews= new BoardNews(articleTitle,imageUrl,articleUrl,articleDate);
+            pageElement = article.select(".topic-title a");
+            articleTitle=pageElement.text();
+            articleUrl=pageElement.attr("href");
+            pageElement = article.select(".preview img");
+            imageUrl= pageElement.attr("src");
+            pageElement = article.select(".topic-header time");
+            articleDate=pageElement.text();
+            pageElement = article.select(".topic-content.text");
+            smallDesc.append(pageElement.text());
+            if(smallDesc.length()>150){
+                smallDesc.setLength(150);
+                smallDesc.append("...");
+            }
+            BoardNews parsedNews= new BoardNews(articleTitle,smallDesc.toString(), imageUrl,articleUrl,articleDate);
             newsArrayList.add(parsedNews);
+            smallDesc.setLength(0);
         }
         return newsArrayList;
     }

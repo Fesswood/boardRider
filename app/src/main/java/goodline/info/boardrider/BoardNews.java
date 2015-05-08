@@ -16,13 +16,15 @@ import java.util.Locale;
  */
 public class BoardNews implements Comparable<BoardNews>, Parcelable {
   private  String mTitle;
+  private  String mSmallDesc;
   private  String mImageUrl;
   private  String mArticleUrl;
   private  String mStringDate;
   public static DateFormat sJUD;
 
 
-    public BoardNews(String title,String imageUrl,String articleUrl,String stringDate) {
+    public BoardNews(String title, String smallDesc, String imageUrl, String articleUrl, String stringDate) {
+        this.mSmallDesc=smallDesc;
         this.mStringDate = stringDate;
         this.mTitle = title;
         this.mImageUrl = imageUrl;
@@ -107,10 +109,20 @@ public class BoardNews implements Comparable<BoardNews>, Parcelable {
     public int describeContents() {
         return 0;
     }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(mTitle);
+        dest.writeString(mSmallDesc);
+        dest.writeString(mImageUrl);
+        dest.writeString(mArticleUrl);
+        dest.writeString(mStringDate);
+    }
     // this is used to regenerate your object. All Parcelables must have a CREATOR that implements these two methods
     public static final Parcelable.Creator<BoardNews> CREATOR = new Parcelable.Creator<BoardNews>() {
+
         public BoardNews createFromParcel(Parcel in) {
-            return new BoardNews(in.readString(),in.readString(),in.readString(),in.readString());
+            return new BoardNews(in.readString(), in.readString(), in.readString(),in.readString(),in.readString());
         }
 
         public BoardNews[] newArray(int size) {
@@ -118,13 +130,11 @@ public class BoardNews implements Comparable<BoardNews>, Parcelable {
         }
     };
 
+    public String getSmallDesc() {
+        return mSmallDesc;
+    }
 
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(mTitle);
-        dest.writeString(mImageUrl);
-        dest.writeString(mArticleUrl);
-        dest.writeString(mStringDate);
+    public void setSmallDesc(String smallDesc) {
+        mSmallDesc = smallDesc;
     }
 }

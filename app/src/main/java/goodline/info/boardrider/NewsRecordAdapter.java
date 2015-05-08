@@ -1,6 +1,7 @@
 package goodline.info.boardrider;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,10 +21,11 @@ import java.util.List;
 public class NewsRecordAdapter extends ArrayAdapter<BoardNews> {
 
     private ArrayList<BoardNews> mNewslist;
-
+    private final Context mContext;
     public NewsRecordAdapter(Context context) {
         super(context, R.layout.news_list_item);
         mNewslist=new ArrayList<>();
+        mContext=context;
     }
 
     public void addNewslist(ArrayList<BoardNews> parsedNewsList) {
@@ -40,16 +42,23 @@ public class NewsRecordAdapter extends ArrayAdapter<BoardNews> {
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.news_list_item, parent, false);
         }
 
-        // NOTE: You would normally use the ViewHolder pattern here
        ImageView imageView = (ImageView) convertView.findViewById(R.id.news_image);
         TextView titleView = (TextView) convertView.findViewById(R.id.news_title);
         TextView dateView = (TextView) convertView.findViewById(R.id.news_date);
+
         BoardNews newsItem = mNewslist.get(position);
         Picasso.with(getContext())
                 .load(newsItem.getImageUrl())
                 .into(imageView);
         titleView.setText(newsItem.getTitle());
         dateView.setText(newsItem.getStringDate());
+
+        if(mContext.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
+            TextView descView = (TextView) convertView.findViewById(R.id.news_desc);
+            descView.setText(newsItem.getSmallDesc());
+
+        }
+
         return convertView;
     }
     @Override
