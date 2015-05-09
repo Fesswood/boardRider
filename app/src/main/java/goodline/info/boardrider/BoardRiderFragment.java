@@ -80,7 +80,7 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
             }
         });
 
-        mAdapter = new NewsRecordAdapter(getActivity());
+        mAdapter =  BoardNewsLab.get(getActivity()).getNewsRecordAdapter();
 
         mListView = (ListView) getView().findViewById(R.id.news_list);
         mListView.setAdapter(mAdapter);
@@ -208,7 +208,7 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         BoardNews boardNews = mAdapter.getItem(position);
-        Intent i = new Intent(getActivity(), boardNewsActivity.class);
+        Intent i = new Intent(getActivity(), ViewPagerActivity.class);
         i.putExtra(BoardRiderFragment.SELECTED_NEWS, boardNews);
         startActivity(i);
     }

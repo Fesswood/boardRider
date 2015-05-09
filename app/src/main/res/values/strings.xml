@@ -8,4 +8,6 @@
     <string name="refresh_finished">Загрузка завершена</string>
     <string name="error_load_data">Загрузка данных завершилась с ошибкой. Попробуйте еще раз.</string>
     <string name="title_activity_board_news">boardNewsActivity</string>
+    <string name="link_article">ОТКРЫТЬ НА САЙТЕ</string>
+    <string name="title_activity_view_pager">ViewPagerActivity</string>
 </resources>

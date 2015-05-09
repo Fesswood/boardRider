@@ -1,12 +1,14 @@
 package goodline.info.boardrider;
 
-import android.app.ActionBar;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.text.Html;
@@ -17,7 +19,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.Toolbar;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
@@ -27,37 +28,42 @@ import com.squareup.picasso.Picasso;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-
-import java.util.ArrayList;
 
 import valleyapp.VolleyApplication;
 
 
-/**
- * A placeholder fragment containing a simple view.
- */
-public class boardNewsFragment extends Fragment {
+public class boardNewsFragment extends Fragment implements TextView.OnClickListener {
 
+    public static final String BOARD_NEWS_ENTRY = "boardNewsFragment.BOARD_NEWS_ENTRY";
     private static final String TAG= "boardNewsFragment";
     private ImageView mTitleImageView;
     private TextView mTitleView;
     private TextView mArticleView;
+    private TextView mWatchersView;
+    private TextView mLinkToSiteView;
     private BoardNews mBoardNews;
 
-    public boardNewsFragment() {
 
+    public static boardNewsFragment newInstance(BoardNews boardNews) {
+        Bundle args = new Bundle();
+        args.putParcelable(BOARD_NEWS_ENTRY, boardNews);
+
+        boardNewsFragment fragment = new boardNewsFragment();
+        fragment.setArguments(args);
+
+        return fragment;
     }
-
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        mBoardNews      = (BoardNews) getActivity().getIntent().getParcelableExtra(BoardRiderFragment.SELECTED_NEWS);
+        mBoardNews      =  getActivity().getIntent().getParcelableExtra(BOARD_NEWS_ENTRY);
         mTitleImageView = (ImageView)getView().findViewById(R.id.title_image);
-        mTitleView      = (TextView) getView().findViewById(R.id.titleView);
-        mArticleView      = (TextView) getView().findViewById(R.id.article_content);
+        mTitleView      = (TextView) getView().findViewById(R.id.title_view);
+        mArticleView    = (TextView) getView().findViewById(R.id.article_content);
+        mWatchersView   = (TextView) getView().findViewById(R.id.watchers_view);
+        mLinkToSiteView = (TextView) getView().findViewById(R.id.link);
         mTitleView.setText(mBoardNews.getTitle());
 
 
@@ -66,6 +72,9 @@ public class boardNewsFragment extends Fragment {
                 .fit()
                 .centerCrop()
                 .into(mTitleImageView);
+
+
+        mLinkToSiteView.setOnClickListener(this);
 
         getActivity().setTitle(mBoardNews.getTitle());
         fetchArticle();
@@ -83,13 +92,7 @@ public class boardNewsFragment extends Fragment {
                     new Response.Listener<String>() {
                         @Override
                         public void onResponse(String response) {
-                            String articleHTML = parseArticle(response);
-                            mArticleView.setText(Html.fromHtml(articleHTML,
-                                                 new PicassoImageGetter(
-                                                         mArticleView,
-                                                         Resources.getSystem(),
-                                                         Picasso.with(getActivity())
-                                                 ), null));
+                            parseAndSetArticle(response);
                         }
                     }, new Response.ErrorListener() {
                 @Override
@@ -101,7 +104,7 @@ public class boardNewsFragment extends Fragment {
             VolleyApplication.getInstance().getRequestQueue().add(stringRequest);
         }
 
-    private String parseArticle(String HTML){
+    private void parseAndSetArticle(String HTML){
          Document doc =null;
         try {
             doc = Jsoup.parse(HTML);
@@ -110,19 +113,22 @@ public class boardNewsFragment extends Fragment {
             Log.e(null,e.getMessage(),e);
         }
         Elements article = doc.select(".topic-content.text");
-        return article.html();
-       /* String imageUrl,articleTitle,articleUrl,articleDate;
-        Elements titleElemet,imageElement, timeElement;
+        String articleHTML=article.html();
+        Elements watchers =  doc.select(".topic-info-viewers");
+        mWatchersView.setText(" " + watchers.text());
+        mArticleView.setText(Html.fromHtml(articleHTML,
+                new PicassoImageGetter(
+                        mArticleView,
+                        Resources.getSystem(),
+                        Picasso.with(getActivity())
+                ), null));
+    }
 
-            titleElemet = article.select(".topic-title a");
-            articleTitle=titleElemet.text();
-            articleUrl=titleElemet.attr("href");
-            imageElement = article.select(".preview img");
-            imageUrl= imageElement.attr("src");
-            timeElement = article.select(".topic-header time");
-            articleDate=timeElement.text();
-            BoardNews parsedNews= new BoardNews(articleTitle,imageUrl,articleUrl,articleDate);
-            newsArrayList.add(parsedNews);*/
+    @Override
+    public void onClick(View v) {
+        Intent i = new Intent(Intent.ACTION_VIEW);
+        i.setData(Uri.parse(mBoardNews.getArticleUrl()));
+        startActivity(i);
     }
 
     public class PicassoImageGetter implements Html.ImageGetter {
