@@ -4,6 +4,8 @@ package goodline.info.boardrider;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import org.w3c.dom.Text;
+
 import java.text.DateFormat;
 import java.text.DateFormatSymbols;
 import java.text.ParseException;
@@ -78,33 +80,33 @@ public class BoardNews implements Comparable<BoardNews>, Parcelable {
 
     @Override
     public int compareTo(BoardNews another) {
-
-
-
+        int result=-1;
+        if(another==null){
+            throw new NullPointerException("another entry is null!");
+        }
         try {
             Date currentDate =  sJUD.parse(mStringDate);
             Date anotherDate =  sJUD.parse(another.mStringDate);
 
-            if(currentDate.before(anotherDate))
-            {
-                /* текущее меньше полученного */
-                return -1;
-            }
-            else if(currentDate.after(anotherDate))
-            {
-                 /* текущее больше полученного */
-                return 1;
-            }
-
+            result = currentDate.compareTo(anotherDate);
         } catch (ParseException e) {
             e.printStackTrace();
         }
-
-
-
-        return 0;
+        return result;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        if (this.compareTo((BoardNews)obj) != 0)
+            return false;
+        return true;
+    }
     @Override
     public int describeContents() {
         return 0;

@@ -32,7 +32,7 @@ public class NewsRecordAdapter extends ArrayAdapter<BoardNews> {
         mNewslist.addAll(parsedNewsList);
         notifyDataSetChanged();
     }
-    public List<BoardNews> getNewsList() {
+    public ArrayList<BoardNews> getNewsList() {
        return mNewslist;
     }
 

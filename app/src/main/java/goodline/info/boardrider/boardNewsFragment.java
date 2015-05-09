@@ -58,7 +58,7 @@ public class boardNewsFragment extends Fragment implements TextView.OnClickListe
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        mBoardNews      =  getActivity().getIntent().getParcelableExtra(BOARD_NEWS_ENTRY);
+        mBoardNews      =  getArguments().getParcelable(BOARD_NEWS_ENTRY);
         mTitleImageView = (ImageView)getView().findViewById(R.id.title_image);
         mTitleView      = (TextView) getView().findViewById(R.id.title_view);
         mArticleView    = (TextView) getView().findViewById(R.id.article_content);
