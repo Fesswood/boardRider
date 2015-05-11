@@ -12,24 +12,26 @@
         android:theme="@style/AppTheme" >
         <activity
             android:name=".BoardRiderActivity"
-            android:label="@string/title_activity_board_rider" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            android:label="@string/title_activity_board_rider"
+            >
         </activity>
+
         <activity
-            android:name=".boardNewsActivity"
-            android:label="@string/title_activity_board_news"
+            android:name=".ViewPagerActivity"
+            android:label="@string/title_activity_view_pager"
             android:parentActivityName=".BoardRiderActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="goodline.info.boardrider.BoardRiderActivity" />
         </activity>
         <activity
-            android:name=".ViewPagerActivity"
-            android:label="@string/title_activity_view_pager" >
+            android:name=".SplashScreenActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
     </application>
 

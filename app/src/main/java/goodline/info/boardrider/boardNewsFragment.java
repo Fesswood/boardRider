@@ -14,9 +14,13 @@ import android.os.Bundle;
 import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -37,6 +41,7 @@ public class boardNewsFragment extends Fragment implements TextView.OnClickListe
 
     public static final String BOARD_NEWS_ENTRY = "boardNewsFragment.BOARD_NEWS_ENTRY";
     private static final String TAG= "boardNewsFragment";
+    private ScrollView mScrollView;
     private ImageView mTitleImageView;
     private TextView mTitleView;
     private TextView mArticleView;
@@ -57,8 +62,9 @@ public class boardNewsFragment extends Fragment implements TextView.OnClickListe
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
+        setHasOptionsMenu(true);
         mBoardNews      =  getArguments().getParcelable(BOARD_NEWS_ENTRY);
+        mScrollView     = (ScrollView)getView().findViewById(R.id.scroll_view);
         mTitleImageView = (ImageView)getView().findViewById(R.id.title_image);
         mTitleView      = (TextView) getView().findViewById(R.id.title_view);
         mArticleView    = (TextView) getView().findViewById(R.id.article_content);
@@ -98,7 +104,7 @@ public class boardNewsFragment extends Fragment implements TextView.OnClickListe
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     Toast.makeText(getActivity(), R.string.error_load_data, Toast.LENGTH_SHORT).show();
-                    Log.e(TAG, error.getMessage());
+                    Log.e(TAG, "News Topic:"+mBoardNews.getTitle()+" : Error "+error.getMessage());
                 }
             });
             VolleyApplication.getInstance().getRequestQueue().add(stringRequest);
@@ -198,4 +204,28 @@ public class boardNewsFragment extends Fragment implements TextView.OnClickListe
 
         }
     }
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_board_rider, menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_to_top) {
+            mScrollView.fullScroll(View.FOCUS_DOWN);
+        }
+        if (id == R.id.action_to_bottom) {
+            mScrollView.fullScroll(View.FOCUS_UP);
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+  
 }

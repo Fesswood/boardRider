@@ -7,6 +7,9 @@ import android.os.Bundle;
 import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -36,7 +39,7 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
 
     private static final String TAG= "BoardRiderFragment";
     private static final String PAGE_INDEX = "goodline.info.boardrider.index";
-    public static final String SELECTED_NEWS = "goodline.info.boardrider.SELECTED_NEWS";
+    public static final String SELECTED_NEWS = "goodline.info.boardrider.selected_news";
     private NewsRecordAdapter mAdapter;
     private String mBoardUrl;
     private int  mPageIndex;
@@ -56,7 +59,8 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
             mPageIndex=1;
         }
 
-
+        getActivity().setTitle("Новости");
+        setHasOptionsMenu(true);
         mSwipyRefreshLayout = (SwipyRefreshLayout) getView().findViewById(R.id.refresh);
         mSwipyRefreshLayout.setDirection(SwipyRefreshLayoutDirection.BOTH);
         mSwipyRefreshLayout.setOnRefreshListener(new SwipyRefreshLayout.OnRefreshListener() {
@@ -82,10 +86,20 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
 
         mAdapter =  BoardNewsLab.get(getActivity()).getNewsRecordAdapter();
 
+        if (getActivity().getIntent().getExtras() != null) {
+          ArrayList<BoardNews> loadedNews = getActivity().getIntent().getExtras().getParcelableArrayList(SplashScreenActivity.NEWS_LIST);
+            if(loadedNews.size()!=0){
+                mAdapter.addNewslist(loadedNews);
+                mPageIndex++;
+            }else{
+                fetch(1, false, false);
+            }
+        }else{
+          fetch(1, false, false);
+        }
         mListView = (ListView) getView().findViewById(R.id.news_list);
         mListView.setAdapter(mAdapter);
         mListView.setOnItemClickListener(this);
-        fetch(1, false, false);
     }
 
     @Override
@@ -211,5 +225,28 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
         Intent i = new Intent(getActivity(), ViewPagerActivity.class);
         i.putExtra(BoardRiderFragment.SELECTED_NEWS, boardNews);
         startActivity(i);
+    }
+    @Override
+        public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_board_rider, menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_to_top) {
+            mListView.smoothScrollToPosition(0);
+        }
+        if (id == R.id.action_to_bottom) {
+            mListView.smoothScrollToPosition(mAdapter.getCount()-1);
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 }
