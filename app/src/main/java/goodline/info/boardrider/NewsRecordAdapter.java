@@ -2,6 +2,7 @@ package goodline.info.boardrider;
 
 import android.content.Context;
 import android.content.res.Configuration;
+import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,25 +39,35 @@ public class NewsRecordAdapter extends ArrayAdapter<BoardNews> {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+
+        BoardNews newsItem = mNewslist.get(position);
+        boolean isImageLinkempty=newsItem.getImageUrl().isEmpty();
         if(convertView == null) {
-            convertView = LayoutInflater.from(getContext()).inflate(R.layout.news_list_item, parent, false);
+                convertView = LayoutInflater.from(getContext()).inflate(R.layout.news_list_item, parent, false);
         }
 
-       ImageView imageView = (ImageView) convertView.findViewById(R.id.news_image);
+
+            ImageView imageView = (ImageView) convertView.findViewById(R.id.news_image);
+
+            if(!newsItem.getImageUrl().isEmpty()){
+                Picasso.with(getContext())
+                        .load(newsItem.getImageUrl())
+                        .into(imageView);
+            }else{
+                Picasso.with(getContext())
+                        .load(R.drawable.transparent_bg)
+                        .into(imageView);
+            }
+
         TextView titleView = (TextView) convertView.findViewById(R.id.news_title);
         TextView dateView = (TextView) convertView.findViewById(R.id.news_date);
 
-        BoardNews newsItem = mNewslist.get(position);
-        Picasso.with(getContext())
-                .load(newsItem.getImageUrl())
-                .into(imageView);
         titleView.setText(newsItem.getTitle());
         dateView.setText(newsItem.getStringDate());
 
-        if(mContext.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
+        if(mContext.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE ){
             TextView descView = (TextView) convertView.findViewById(R.id.news_desc);
             descView.setText(newsItem.getSmallDesc());
-
         }
 
         return convertView;

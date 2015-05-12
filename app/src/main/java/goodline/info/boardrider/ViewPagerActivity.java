@@ -35,7 +35,13 @@ public class ViewPagerActivity extends FragmentActivity {
         final NewsRecordAdapter newsRecordAdapter = BoardNewsLab.get(this).getNewsRecordAdapter();
         mNewsList = newsRecordAdapter.getNewsList();
         FragmentManager fm = getSupportFragmentManager();
+
         mViewPager.setAdapter(new FragmentStatePagerAdapter(fm) {
+            @Override
+            public CharSequence getPageTitle(int position) {
+                return  mNewsList.get(position).getTitle();
+            }
+
             @Override
             public int getCount() {
                 return mNewsList.size();

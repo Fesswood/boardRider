@@ -187,7 +187,7 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
             // TODO Auto-generated catch block
             Log.e(null,e.getMessage(),e);
         }
-        Elements articles = doc.select(".list-topic .topic.topic-type-topic.js-topic.out-topic");
+        Elements articles = doc.select(".list-topic article.topic");
         String imageUrl,
                articleTitle,
                articleUrl,
@@ -199,7 +199,11 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
             articleTitle=pageElement.text();
             articleUrl=pageElement.attr("href");
             pageElement = article.select(".preview img");
-            imageUrl= pageElement.attr("src");
+            if(!pageElement.isEmpty()){
+                imageUrl= pageElement.attr("src");
+            }else{
+                imageUrl="";
+            }
             pageElement = article.select(".topic-header time");
             articleDate=pageElement.text();
             pageElement = article.select(".topic-content.text");
