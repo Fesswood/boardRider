@@ -2,7 +2,6 @@ package goodline.info.boardrider;
 
 import android.content.Context;
 import android.content.res.Configuration;
-import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,8 +12,6 @@ import android.widget.TextView;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Created by Балдин Сергей on 06.05.2015.
@@ -55,7 +52,7 @@ public class NewsRecordAdapter extends ArrayAdapter<BoardNews> {
                         .into(imageView);
             }else{
                 Picasso.with(getContext())
-                        .load(R.drawable.transparent_bg)
+                        .load(R.drawable.image_polyfill)
                         .into(imageView);
             }
 
