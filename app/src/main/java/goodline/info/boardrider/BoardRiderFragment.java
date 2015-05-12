@@ -56,7 +56,7 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
         if (savedInstanceState != null) {
             mPageIndex = savedInstanceState.getInt(PAGE_INDEX, 0);
         }else{
-            mPageIndex=1;
+            mPageIndex=6;
         }
 
         getActivity().setTitle("Новости");
@@ -107,6 +107,7 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
         super.onSaveInstanceState(savedInstanceState);
         Log.i(TAG, "onSaveInstanceState");
         savedInstanceState.putInt(PAGE_INDEX, mPageIndex);
+
     }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,

@@ -45,6 +45,26 @@ public class BoardNews implements Comparable<BoardNews>, Parcelable {
         }
     }
 
+    public BoardNews() {
+        mTitle = "";
+        mSmallDesc = "";
+        mImageUrl = "";
+        mArticleUrl = "";
+        mStringDate = "";
+        if(sJUD==null){
+            Locale russian = new Locale("ru");
+            String[] newMonths = {
+                    "января", "февраля", "марта", "апреля", "мая", "июня",
+                    "июля", "августа", "сентября", "октября", "ноября", "декабря"};
+            DateFormatSymbols dfs = DateFormatSymbols.getInstance(russian);
+            dfs.setMonths(newMonths);
+            DateFormat df = DateFormat.getDateInstance(DateFormat.LONG, russian);
+            SimpleDateFormat sdf = (SimpleDateFormat) df;
+            sdf.setDateFormatSymbols(dfs);
+            sJUD  =  new SimpleDateFormat("d MMMM yyyy, HH:mm", new Locale("ru"));
+        }
+    }
+
 
     public String getTitle() {
         return mTitle;

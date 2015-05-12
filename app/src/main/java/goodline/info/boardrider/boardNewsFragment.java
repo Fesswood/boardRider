@@ -72,12 +72,19 @@ public class boardNewsFragment extends Fragment implements TextView.OnClickListe
         mLinkToSiteView = (TextView) getView().findViewById(R.id.link);
         mTitleView.setText(mBoardNews.getTitle());
 
-
-        Picasso.with(getActivity())
-                .load(mBoardNews.getImageUrl())
-                .fit()
-                .centerCrop()
-                .into(mTitleImageView);
+        if(!mBoardNews.getImageUrl().isEmpty()){
+            Picasso.with(getActivity())
+                    .load(mBoardNews.getImageUrl())
+                    .fit()
+                    .centerCrop()
+                    .into(mTitleImageView);
+        }else{
+            Picasso.with(getActivity())
+                    .load(R.drawable.transparent_bg)
+                    .fit()
+                    .centerCrop()
+                    .into(mTitleImageView);
+        }
 
 
         mLinkToSiteView.setOnClickListener(this);
