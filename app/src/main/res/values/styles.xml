@@ -5,11 +5,8 @@
         <!-- Customize your theme here. -->
     </style>
 
-    <style name="Theme.AppCompat.Light.NoActionBar.FullScreen" parent="@style/Theme.AppCompat.Light">
-        <item name="android:windowNoTitle">true</item>
-        <item name="windowActionBar">false</item>
-        <item name="android:windowFullscreen">true</item>
-        <item name="android:windowContentOverlay">@null</item>
+    <style name="Theme.AppCompat.Light.NoActionBar.FullScreen" parent="@style/Theme.AppCompat.NoActionBar">
+         <item name="windowActionBar">false</item>
     </style>
 
     <style name="Theme.AppCompat.Light.NoActionBar.YlwTitleBar" parent="@style/Widget.AppCompat.Light.ActionBar.Solid.Inverse">
