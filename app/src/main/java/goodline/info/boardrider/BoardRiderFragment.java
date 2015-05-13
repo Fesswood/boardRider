@@ -29,6 +29,7 @@ import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 
+import goodline.info.sqllite.BoardNewsORM;
 import valleyapp.VolleyApplication;
 
 
@@ -56,7 +57,7 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
         if (savedInstanceState != null) {
             mPageIndex = savedInstanceState.getInt(PAGE_INDEX, 0);
         }else{
-            mPageIndex=6;
+            mPageIndex=1;
         }
 
         getActivity().setTitle("Новости");
@@ -107,6 +108,7 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
         super.onSaveInstanceState(savedInstanceState);
         Log.i(TAG, "onSaveInstanceState");
         savedInstanceState.putInt(PAGE_INDEX, mPageIndex);
+      //  BoardNewsORM.insertPost(getActivity(),  mAdapter.getNewsList());
 
     }
     @Override

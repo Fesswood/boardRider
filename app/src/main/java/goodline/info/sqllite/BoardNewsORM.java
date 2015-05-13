@@ -4,6 +4,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -12,7 +14,7 @@ import java.util.List;
 import goodline.info.boardrider.BoardNews;
 
 /**
- * Created by Балдин Сергей on 12.05.2015.
+ * Created by пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ on 12.05.2015.
  */
 public class BoardNewsORM {
 
@@ -39,10 +41,10 @@ public class BoardNewsORM {
 
 
     public static final String SQL_CREATE_TABLE =
-            "CREATE TABLE " + TABLE_NAME + " (" +
+            "CREATE TABLE " + TABLE_NAME + " (ID INTEGER PRIMARY KEY AUTOINCREMENT ASC," +
                     COLUMN_TITLE  + " " + COLUMN_TITLE_TYPE + COMMA_SEP +
                     COLUMN_DESC + " " + COLUMN_DESC_TYPE + COMMA_SEP +
-                    COLUMN_IMAGE_URL + " " + COLUMN_ARTICLE_URL_TYPE + COMMA_SEP +
+                    COLUMN_IMAGE_URL + " " + COLUMN_IMAGE_URL_TYPE + COMMA_SEP +
                     COLUMN_ARTICLE_URL + " " + COLUMN_ARTICLE_URL_TYPE + COMMA_SEP +
                     COLUMN_DATE + " " + COLUMN_DATE_TYPE +
                     ")";
@@ -51,14 +53,15 @@ public class BoardNewsORM {
             "DROP TABLE IF EXISTS " + TABLE_NAME;
 
 
-    public static void insertPost(Context context, BoardNews news) {
+    public static void insertPost(Context context, ArrayList<BoardNews> news) {
         DatabaseWrapper databaseWrapper = new DatabaseWrapper(context);
         SQLiteDatabase database = databaseWrapper.getWritableDatabase();
-
-        ContentValues values = postToContentValues(news);
-        long postId = database.insert(BoardNewsORM.TABLE_NAME, "null", values);
-        Log.i(TAG, "Inserted new Post with ID: " + postId);
-
+        ContentValues values;  long postId;
+        for(BoardNews boardNews: news){
+            values = postToContentValues(boardNews);
+            postId = database.insert(BoardNewsORM.TABLE_NAME, "null", values);
+            Log.i(TAG, "Inserted new Post with ID: " + postId);
+        }
         database.close();
     }
 
@@ -76,14 +79,39 @@ public class BoardNewsORM {
         return values;
     }
 
-    public static List<BoardNews> getPosts(Context context) {
+    public static ArrayList<BoardNews> getPosts(Context context) {
         DatabaseWrapper databaseWrapper = new DatabaseWrapper(context);
         SQLiteDatabase database = databaseWrapper.getReadableDatabase();
 
         Cursor cursor = database.rawQuery("SELECT * FROM " + BoardNewsORM.TABLE_NAME, null);
 
         Log.i(TAG, "Loaded " + cursor.getCount() + " BoardNewss...");
-        List<BoardNews> BoardNewsList = new ArrayList<BoardNews>();
+        ArrayList<BoardNews> BoardNewsList = new ArrayList<BoardNews>();
+
+        if(cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            while (!cursor.isAfterLast()) {
+                BoardNews boardNews = cursorToBoardNews(cursor);
+                BoardNewsList.add(boardNews);
+                cursor.moveToNext();
+            }
+            Log.i(TAG, "BoardNews loaded successfully.");
+        }
+
+        database.close();
+
+        return BoardNewsList;
+    }
+    public static ArrayList<BoardNews> getPostsFromPage(Context context, int startpage, int pageNumber) {
+        DatabaseWrapper databaseWrapper = new DatabaseWrapper(context);
+        SQLiteDatabase database = databaseWrapper.getReadableDatabase();
+
+        Cursor cursor = database.rawQuery("SELECT * FROM " + BoardNewsORM.TABLE_NAME
+                                          + " LIMIT " +10 * pageNumber
+                                          + " OFFSET "+ 10 * (startpage), null);
+
+        Log.i(TAG, "Loaded " + cursor.getCount() + " BoardNewss...");
+        ArrayList<BoardNews> BoardNewsList = new ArrayList<BoardNews>();
 
         if(cursor.getCount() > 0) {
             cursor.moveToFirst();
@@ -116,4 +144,29 @@ public class BoardNewsORM {
         return news;
     }
 
+    public static ArrayList<BoardNews> getPostsByDate(Context context, BoardNews firstBoardNews, BoardNews lastBoardNews) {
+        DatabaseWrapper databaseWrapper = new DatabaseWrapper(context);
+        SQLiteDatabase database = databaseWrapper.getReadableDatabase();
+
+        Cursor cursor = database.rawQuery("SELECT * FROM " + BoardNewsORM.TABLE_NAME
+                + " WHERE "+COLUMN_DATE + " BETWEEN \'"
+                + firstBoardNews.getSQLformatDate()  + "\' AND \'" +11/8/2011+ "\'", null);
+
+        Log.i(TAG, "Loaded " + cursor.getCount() + " BoardNewss...");
+        ArrayList<BoardNews> BoardNewsList = new ArrayList<BoardNews>();
+
+        if(cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            while (!cursor.isAfterLast()) {
+                BoardNews boardNews = cursorToBoardNews(cursor);
+                BoardNewsList.add(boardNews);
+                cursor.moveToNext();
+            }
+            Log.i(TAG, "BoardNews loaded successfully.");
+        }
+
+        database.close();
+
+        return BoardNewsList;
+    }
 }

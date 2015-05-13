@@ -1,5 +1,8 @@
 package goodline.info.boardrider;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.util.Log;
 
 import com.android.volley.Request;
@@ -19,6 +22,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import goodline.info.sqllite.BoardNewsORM;
 import valleyapp.VolleyApplication;
 
 /**
@@ -28,6 +32,7 @@ public class NewsLoader {
 
 
     private int mPageIndex=1;
+    private Context mContext;
     private String mBoardUrl;
     private String mErrorMessage;
     private ArrayList<BoardNews> mData;
@@ -36,11 +41,49 @@ public class NewsLoader {
     private static final String TAG="NewsLoader";
 
 
-    public NewsLoader( String dataUri) {
+    public NewsLoader(String dataUri) {
         mBoardUrl=dataUri;
     }
+    public NewsLoader(String dataUri, Context context) {
+        mBoardUrl=dataUri;
+        mContext=context;
+    }
+    public boolean fechFromDB(int offset, boolean isNextPageNeeded){
+        if(offset == mPageIndex){
+            throw new IllegalArgumentException(TAG+": startpage and mPageIndex must be different value: mPageIndex="+mPageIndex+" startindex"+offset );
+        }
 
-    public boolean fetch(int startpage, boolean isNextPageNeeded) throws ExecutionException, InterruptedException {
+        mData = BoardNewsORM.getPostsFromPage(mContext, offset, mPageIndex);
+
+        if(isNextPageNeeded || mPageIndex==1){
+            mPageIndex++;
+        }
+        return false;
+    }
+    public boolean syncDB() throws ExecutionException, InterruptedException {
+        boolean fetchingComplete = fetchFromInternet(1,false);
+        if(fetchingComplete){
+           BoardNews lastBoardNews = mData.get(0);
+           BoardNews firstBoardNews = mData.get(mData.size() - 1);
+           ArrayList<BoardNews> newsBetweenDates= BoardNewsORM.getPostsByDate(mContext, firstBoardNews, lastBoardNews);
+            // if database doesn't keep any rows between dates add all new rows to database
+            if(newsBetweenDates.size()==0){
+                BoardNewsORM.insertPost(mContext, mData);
+            }else{
+                boolean isCollectionModified = mData.removeAll(newsBetweenDates);
+                if(isCollectionModified){
+                    BoardNewsORM.insertPost(mContext,mData);
+                    mData.addAll(newsBetweenDates);
+                }
+            }
+        }else{
+            mErrorMessage="Can't fetch data";
+        }
+
+        return false;
+    }
+
+    public boolean fetchFromInternet(int startpage, boolean isNextPageNeeded) throws ExecutionException, InterruptedException {
         StringRequest stringRequest;
         for (int i=startpage; i<mPageIndex+1; i++){
             RequestFuture<String> future = RequestFuture.newFuture();
@@ -60,8 +103,6 @@ public class NewsLoader {
         if(isNextPageNeeded || mPageIndex==1){
             mPageIndex++;
         }
-
-
         return mDataLoadResult;
     }
 
@@ -101,6 +142,14 @@ public class NewsLoader {
         }
         return newsArrayList;
     }
+
+    public static boolean isOnline(Context context) {
+        ConnectivityManager cm =
+                (ConnectivityManager)  context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        return netInfo != null && netInfo.isConnectedOrConnecting();
+    }
+
 
     public int getPageIndex() {
         return mPageIndex;

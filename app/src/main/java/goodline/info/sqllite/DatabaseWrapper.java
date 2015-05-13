@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 /**
- * Created by Балдин Сергей on 12.05.2015.
+ * Created by пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ on 12.05.2015.
  */
 public class DatabaseWrapper extends SQLiteOpenHelper {
 
@@ -25,7 +25,8 @@ public class DatabaseWrapper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         Log.i(TAG, "Creating database [" + DATABASE_NAME + " v." + DATABASE_VERSION + "]...");
-        //TODO: Create the Database
+        sqLiteDatabase.execSQL(BoardNewsORM.SQL_CREATE_TABLE);
+        sqLiteDatabase.close();
     }
 
     /**
@@ -34,5 +35,7 @@ public class DatabaseWrapper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int oldVersion, int newVersion) {
         Log.i(TAG, "Upgrading database ["+DATABASE_NAME+" v." + oldVersion+"] to ["+DATABASE_NAME+" v." + newVersion+"]...");
+        sqLiteDatabase.execSQL(BoardNewsORM.SQL_DROP_TABLE);
+        onCreate(sqLiteDatabase);
     }
 }

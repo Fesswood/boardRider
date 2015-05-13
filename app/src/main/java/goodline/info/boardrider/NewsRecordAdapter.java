@@ -13,6 +13,8 @@ import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 
+import goodline.info.sqllite.BoardNewsORM;
+
 /**
  * Created by Балдин Сергей on 06.05.2015.
  */
@@ -46,7 +48,7 @@ public class NewsRecordAdapter extends ArrayAdapter<BoardNews> {
 
             ImageView imageView = (ImageView) convertView.findViewById(R.id.news_image);
 
-            if(!newsItem.getImageUrl().isEmpty()){
+            if(!newsItem.getImageUrl().isEmpty() && NewsLoader.isOnline(getContext())){
                 Picasso.with(getContext())
                         .load(newsItem.getImageUrl())
                         .into(imageView);

@@ -3,14 +3,11 @@ package goodline.info.boardrider;
 
 
 
-import android.app.ActionBar;
 import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
-import android.os.AsyncTask;
 import android.os.Bundle;;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AppCompatActivity;
 
 import android.view.View;
@@ -26,6 +23,8 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
+import goodline.info.sqllite.BoardNewsORM;
+
 
 public class SplashScreenActivity extends AppCompatActivity implements
         android.app.LoaderManager.LoaderCallbacks<ArrayList<BoardNews>>{
@@ -33,7 +32,6 @@ public class SplashScreenActivity extends AppCompatActivity implements
     private ProgressBar mProgressBar;
     private Button mReloadBtn;
     private TextView mStatusTextView;
-    private NewsLoader mNewsLoader;
     public static final  String NEWS_LIST="goodline.info.boardrider.news_list";
 
     public void onAttachedToWindow() {
@@ -44,10 +42,10 @@ public class SplashScreenActivity extends AppCompatActivity implements
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-       // requestWindowFeature(Window.FEATURE_NO_TITLE);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
-      //  getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-       //         WindowManager.LayoutParams.FLAG_FULLSCREEN);
+       getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_splash_creen);
 
 
@@ -84,25 +82,14 @@ public class SplashScreenActivity extends AppCompatActivity implements
     public void startLoading(String message) {
         mStatusTextView.setText(message);
         getLoaderManager().initLoader(0, null, this);
- /*       mTask = new LoadingTask();
 
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-
-            mTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-        } else {
-            mTask.execute();
-        }*/
 
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-     /*   if (mTask != null && mTask.getStatus() != LoadingTask.Status.FINISHED) {
-            mTask.cancel(true);
-            mTask = null;
-        }*/
+
     }
 
 
@@ -136,11 +123,12 @@ public class SplashScreenActivity extends AppCompatActivity implements
     public static class BoardNewsLoader extends AsyncTaskLoader<ArrayList<BoardNews>> {
 
         ArrayList<BoardNews> mBoardNews;
-        private NewsLoader mNewsLoader;
 
         public BoardNewsLoader(Context context) {
             super(context);
         }
+
+
 
         /**
          * This is where the bulk of our work is done.  This function is
@@ -149,12 +137,17 @@ public class SplashScreenActivity extends AppCompatActivity implements
          */
         @Override public ArrayList<BoardNews> loadInBackground() {
             // Retrieve all known applications.
+            NewsLoader mNewsLoader = new NewsLoader("http://live.goodline.info/guest/page");
 
             final Context context = getContext();
-            mNewsLoader = new NewsLoader("http://live.goodline.info/guest/page");
             boolean isResultCorrect = false;
             try {
-                isResultCorrect = mNewsLoader.fetch(1, true);
+                if(NewsLoader.isOnline(context)){
+                    isResultCorrect = mNewsLoader.fetchFromInternet(1, true);
+                }else{
+                    return BoardNewsORM.getPosts(context);
+                }
+
             } catch (ExecutionException e) {
                 e.printStackTrace();
             } catch (InterruptedException e) {
