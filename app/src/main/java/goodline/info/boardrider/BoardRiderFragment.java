@@ -28,6 +28,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 
 import goodline.info.sqllite.BoardNewsORM;
 import valleyapp.VolleyApplication;
@@ -42,8 +43,8 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
     private static final String PAGE_INDEX = "goodline.info.boardrider.index";
     public static final String SELECTED_NEWS = "goodline.info.boardrider.selected_news";
     private NewsRecordAdapter mAdapter;
+    private NewsLoader mNewsLoader;
     private String mBoardUrl;
-    private int  mPageIndex;
     private SwipyRefreshLayout mSwipyRefreshLayout;
     private ListView mListView;
 
@@ -53,13 +54,10 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
+        mNewsLoader= new NewsLoader(mBoardUrl,getActivity());
         if (savedInstanceState != null) {
-            mPageIndex = savedInstanceState.getInt(PAGE_INDEX, 0);
-        }else{
-            mPageIndex=1;
+            mNewsLoader.setPageIndex(savedInstanceState.getInt(PAGE_INDEX, 0));
         }
-
         getActivity().setTitle("Новости");
         setHasOptionsMenu(true);
         mSwipyRefreshLayout = (SwipyRefreshLayout) getView().findViewById(R.id.refresh);
@@ -75,9 +73,10 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
                     public void run() {
                         mSwipyRefreshLayout.setRefreshing(false);
                         if (dir == SwipyRefreshLayoutDirection.BOTTOM) {
-                            fetch(mPageIndex,true,true);
+                            fetch(mNewsLoader.getPageIndex(),true, true);
                         } else {
-                            update();
+                           mNewsLoader.updateAllDB();
+                           mAdapter.prependNewsList(mNewsLoader.getData());
                         }
                         Toast.makeText(getActivity(), R.string.refresh_finished, Toast.LENGTH_SHORT).show();
                     }
@@ -91,7 +90,6 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
           ArrayList<BoardNews> loadedNews = getActivity().getIntent().getExtras().getParcelableArrayList(SplashScreenActivity.NEWS_LIST);
             if(loadedNews.size()!=0){
                 mAdapter.addNewslist(loadedNews);
-                mPageIndex++;
             }else{
                 fetch(1, false, false);
             }
@@ -107,8 +105,7 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
     public void onSaveInstanceState(Bundle savedInstanceState) {
         super.onSaveInstanceState(savedInstanceState);
         Log.i(TAG, "onSaveInstanceState");
-        savedInstanceState.putInt(PAGE_INDEX, mPageIndex);
-      //  BoardNewsORM.insertPost(getActivity(),  mAdapter.getNewsList());
+        savedInstanceState.putInt(PAGE_INDEX, mNewsLoader.getPageIndex());
 
     }
     @Override
@@ -117,109 +114,35 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
         return inflater.inflate(R.layout.fragment_board_rider, container, false);
     }
 
-    private void update() {
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, mBoardUrl+mPageIndex,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-
-                        ArrayList<BoardNews> parsedNewsList = parse(response);
-                        ArrayList<BoardNews> swaplist= new ArrayList<>();
-                        BoardNews firstNews =  mAdapter.getNewsList().get(0);
-                        for (BoardNews loadedBoardNews : parsedNewsList)  {
-                            if (firstNews.compareTo(loadedBoardNews) == -1){
-                                swaplist.add(loadedBoardNews);
-                            }
-                        }
-                        mAdapter.prependNewsList(swaplist);
-
-
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Toast.makeText(getActivity(),  R.string.error_load_data, Toast.LENGTH_SHORT).show();
-                Log.e(TAG,error.getMessage());
-            }
-        });
-        VolleyApplication.getInstance().getRequestQueue().add(stringRequest);
-    }
 
     private void fetch(int startpage, boolean isScrollNeeded, boolean isNextPageNeeded){
-        final boolean isScrollneed=isScrollNeeded;
-        StringRequest stringRequest;
-        for (int i=startpage; i<mPageIndex+1; i++){
-                 stringRequest = new StringRequest(Request.Method.GET, mBoardUrl+i,
-                    new Response.Listener<String>() {
-                        @Override
-                        public void onResponse(String response) {
-                            ArrayList<BoardNews> parsedNewsList = parse(response);
-                            mAdapter.addNewslist(parsedNewsList);
 
-                            if(isScrollneed){
-                                mListView.postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        int nextViewPosition=getVisibleListItemsCount()+mListView.getLastVisiblePosition();
-                                        mListView.smoothScrollToPosition(nextViewPosition);
-                                    }
-                                },200);
-                            }
+        boolean isDataFromInetLoaded=false,
+                isDataFromBDLoaded=mNewsLoader.fechFromDB(startpage, isNextPageNeeded);
 
-                        }
-                    }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    Toast.makeText(getActivity(),  R.string.error_load_data, Toast.LENGTH_SHORT).show();
-                    Log.e(TAG,"error "+error.getMessage());
-                }
-            });
-            VolleyApplication.getInstance().getRequestQueue().add(stringRequest);
-        }
-      if(isNextPageNeeded || mPageIndex==1){
-          mPageIndex++;
-      }
-    }
-
-    private ArrayList<BoardNews> parse(String HTML){
-        ArrayList<BoardNews> newsArrayList = new ArrayList<>();
-        Document doc =null;
-        try {
-            doc = Jsoup.parse(HTML);
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            Log.e(null,e.getMessage(),e);
-        }
-        Elements articles = doc.select(".list-topic article.topic");
-        String imageUrl,
-               articleTitle,
-               articleUrl,
-               articleDate;
-        StringBuffer smallDesc=new StringBuffer(150);
-        Elements pageElement;
-        for (Element article : articles) {
-            pageElement = article.select(".topic-title a");
-            articleTitle=pageElement.text();
-            articleUrl=pageElement.attr("href");
-            pageElement = article.select(".preview img");
-            if(!pageElement.isEmpty()){
-                imageUrl= pageElement.attr("src");
-            }else{
-                imageUrl="";
+        if(!isDataFromBDLoaded){
+            try {
+                isDataFromInetLoaded=  mNewsLoader.fetchFromInternet(startpage,isNextPageNeeded);
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-            pageElement = article.select(".topic-header time");
-            articleDate=pageElement.text();
-            pageElement = article.select(".topic-content.text");
-            smallDesc.append(pageElement.text());
-            if(smallDesc.length()>150){
-                smallDesc.setLength(150);
-                smallDesc.append("...");
-            }
-            BoardNews parsedNews= new BoardNews(articleTitle,smallDesc.toString(), imageUrl,articleUrl,articleDate);
-            newsArrayList.add(parsedNews);
-            smallDesc.setLength(0);
         }
-        return newsArrayList;
+        if(!isDataFromBDLoaded && !isDataFromInetLoaded){
+            Toast.makeText(getActivity(),  R.string.error_load_data, Toast.LENGTH_SHORT).show();
+        }else{
+            mAdapter.addAll(mNewsLoader.getData());
+            if(isScrollNeeded){
+                mListView.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        int nextViewPosition=getVisibleListItemsCount()+mListView.getLastVisiblePosition();
+                        mListView.smoothScrollToPosition(nextViewPosition);
+                    }
+                },200);
+            }
+        }
     }
 
     private int getVisibleListItemsCount(){
@@ -233,6 +156,9 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
         i.putExtra(BoardRiderFragment.SELECTED_NEWS, boardNews);
         startActivity(i);
     }
+
+
+
     @Override
         public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_board_rider, menu);

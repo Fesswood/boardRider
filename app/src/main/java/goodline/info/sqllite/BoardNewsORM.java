@@ -4,12 +4,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import goodline.info.boardrider.BoardNews;
 
@@ -41,7 +38,7 @@ public class BoardNewsORM {
 
 
     public static final String SQL_CREATE_TABLE =
-            "CREATE TABLE " + TABLE_NAME + " (ID INTEGER PRIMARY KEY AUTOINCREMENT ASC," +
+            "CREATE TABLE " + TABLE_NAME + " (" +
                     COLUMN_TITLE  + " " + COLUMN_TITLE_TYPE + COMMA_SEP +
                     COLUMN_DESC + " " + COLUMN_DESC_TYPE + COMMA_SEP +
                     COLUMN_IMAGE_URL + " " + COLUMN_IMAGE_URL_TYPE + COMMA_SEP +
@@ -150,7 +147,7 @@ public class BoardNewsORM {
 
         Cursor cursor = database.rawQuery("SELECT * FROM " + BoardNewsORM.TABLE_NAME
                 + " WHERE "+COLUMN_DATE + " BETWEEN \'"
-                + firstBoardNews.getSQLformatDate()  + "\' AND \'" +11/8/2011+ "\'", null);
+                + firstBoardNews.getTimeStamp()  + "\' AND \'" +11/8/2011+ "\'", null);
 
         Log.i(TAG, "Loaded " + cursor.getCount() + " BoardNewss...");
         ArrayList<BoardNews> BoardNewsList = new ArrayList<BoardNews>();

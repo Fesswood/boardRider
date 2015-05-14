@@ -5,6 +5,9 @@ import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.orm.SugarRecord;
+import com.orm.dsl.Ignore;
+
 import org.w3c.dom.Text;
 
 import java.text.DateFormat;
@@ -17,15 +20,27 @@ import java.util.Locale;
 /**
  * Created by Балдин Сергей on 06.05.2015.
  */
-public class BoardNews implements Comparable<BoardNews>, Parcelable {
+
+public class BoardNews extends SugarRecord<BoardNews> implements Comparable<BoardNews>, Parcelable {
   private  String mTitle;
   private  String mSmallDesc;
   private  String mImageUrl;
   private  String mArticleUrl;
+  private long mTimeStamp;
+  @Ignore
   private  String mStringDate;
+  @Ignore
   public static DateFormat sJUD;
 
-
+    public BoardNews(String title, String smallDesc, String imageUrl, String articleUrl, long timeStamp) {
+        this.mSmallDesc=smallDesc;
+        this.mStringDate = "";
+        this.mTitle = title;
+        this.mImageUrl = imageUrl;
+        this.mArticleUrl=articleUrl;
+        JUDInit();
+        this.mStringDate= sJUD.format(new Date(timeStamp));
+    }
     public BoardNews(String title, String smallDesc, String imageUrl, String articleUrl, String stringDate) {
         this.mSmallDesc=smallDesc;
         this.mStringDate = stringDate;
@@ -33,6 +48,12 @@ public class BoardNews implements Comparable<BoardNews>, Parcelable {
         this.mImageUrl = imageUrl;
         this.mArticleUrl=articleUrl;
         JUDInit();
+        try {
+                this.mTimeStamp=sJUD.parse(stringDate).getTime();
+        } catch (ParseException e) {
+            e.printStackTrace();
+            mTimeStamp=0;
+        }
     }
 
 
@@ -43,6 +64,7 @@ public class BoardNews implements Comparable<BoardNews>, Parcelable {
         mImageUrl = "";
         mArticleUrl = "";
         mStringDate = "";
+        mTimeStamp=0;
         JUDInit();
     }
     private void JUDInit() {
@@ -98,14 +120,10 @@ public class BoardNews implements Comparable<BoardNews>, Parcelable {
         if(another==null){
             throw new NullPointerException("another entry is null!");
         }
-        try {
-            Date currentDate =  sJUD.parse(mStringDate);
-            Date anotherDate =  sJUD.parse(another.mStringDate);
-
+            Date currentDate =  new Date(mTimeStamp);
+            Date anotherDate =  new Date(another.mTimeStamp);
             result = currentDate.compareTo(anotherDate);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
+
         return result;
     }
 
@@ -138,7 +156,7 @@ public class BoardNews implements Comparable<BoardNews>, Parcelable {
     public static final Parcelable.Creator<BoardNews> CREATOR = new Parcelable.Creator<BoardNews>() {
 
         public BoardNews createFromParcel(Parcel in) {
-            return new BoardNews(in.readString(), in.readString(), in.readString(),in.readString(),in.readString());
+            return new BoardNews(in.readString(), in.readString(), in.readString(),in.readString(),in.readLong());
         }
 
         public BoardNews[] newArray(int size) {
@@ -154,8 +172,11 @@ public class BoardNews implements Comparable<BoardNews>, Parcelable {
         mSmallDesc = smallDesc;
     }
 
-    public String getSQLformatDate() {
-        //TODO Make
-        return "";
+    public long getTimeStamp() {
+        return mTimeStamp;
     }
+    public void setTimeStamp(long timeStamp) {
+        mTimeStamp = timeStamp;
+    }
+
 }

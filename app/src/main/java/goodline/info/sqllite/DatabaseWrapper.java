@@ -12,8 +12,8 @@ public class DatabaseWrapper extends SQLiteOpenHelper {
 
     private static final String TAG = "DatabaseWrapper";
 
-    private static final String DATABASE_NAME = "MyDatabase.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final String DATABASE_NAME = "NewsDatabase.db";
+    private static final int DATABASE_VERSION = 2;
 
     public DatabaseWrapper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);

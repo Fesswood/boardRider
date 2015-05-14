@@ -16,13 +16,13 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import goodline.info.sqllite.BoardNewsORM;
+import goodline.info.sqllite.SugarORM;
 import valleyapp.VolleyApplication;
 
 /**
@@ -35,10 +35,14 @@ public class NewsLoader {
     private Context mContext;
     private String mBoardUrl;
     private String mErrorMessage;
+    private int mErrorCode;
     private ArrayList<BoardNews> mData;
-    private boolean mDataLoadResult;
+    private boolean mIsDataLoadCorrectly;
+    private boolean mIsRecursive=true;
 
     private static final String TAG="NewsLoader";
+
+    private static final int INTERNET_CONNECTION_ERROR=1;
 
 
     public NewsLoader(String dataUri) {
@@ -48,46 +52,82 @@ public class NewsLoader {
         mBoardUrl=dataUri;
         mContext=context;
     }
-    public boolean fechFromDB(int offset, boolean isNextPageNeeded){
-        if(offset == mPageIndex){
-            throw new IllegalArgumentException(TAG+": startpage and mPageIndex must be different value: mPageIndex="+mPageIndex+" startindex"+offset );
+    public boolean fechFromDB(int offsetPages, boolean isNextPageNeeded){
+        if(offsetPages == (mPageIndex+1)){
+            throw new IllegalArgumentException(TAG+": startpage and mPageIndex must be different value: mPageIndex="+mPageIndex+" startindex"+offsetPages );
         }
 
-        mData = BoardNewsORM.getPostsFromPage(mContext, offset, mPageIndex);
+       // mData = BoardNewsORM.getPostsFromPage(mContext, offset, mPageIndex);
+          mData = SugarORM.getNewsFromPage(offsetPages, mPageIndex+1);
 
         if(isNextPageNeeded || mPageIndex==1){
             mPageIndex++;
         }
         return false;
     }
-    public boolean syncDB() throws ExecutionException, InterruptedException {
-        boolean fetchingComplete = fetchFromInternet(1,false);
-        if(fetchingComplete){
+
+    /**
+     *  synchronized DB
+     * @return false if  nothing changes true otherwise
+     */
+    public boolean syncDB() {
            BoardNews lastBoardNews = mData.get(0);
            BoardNews firstBoardNews = mData.get(mData.size() - 1);
-           ArrayList<BoardNews> newsBetweenDates= BoardNewsORM.getPostsByDate(mContext, firstBoardNews, lastBoardNews);
+        //   ArrayList<BoardNews> newsBetweenDates= BoardNewsORM.getPostsByDate(mContext, firstBoardNews, lastBoardNews);
+            ArrayList<BoardNews> newsBetweenDates= SugarORM.getNewsByDate(firstBoardNews, lastBoardNews);
             // if database doesn't keep any rows between dates add all new rows to database
             if(newsBetweenDates.size()==0){
-                BoardNewsORM.insertPost(mContext, mData);
+                SugarORM.insertNews(mData);
+                return true;
             }else{
                 boolean isCollectionModified = mData.removeAll(newsBetweenDates);
                 if(isCollectionModified){
-                    BoardNewsORM.insertPost(mContext,mData);
+                    SugarORM.insertNews(mData);
                     mData.addAll(newsBetweenDates);
+                    return true;
                 }
             }
-        }else{
-            mErrorMessage="Can't fetch data";
-        }
-
         return false;
+    }
+    public boolean updateAllDB(){
+        int iterator=1;
+        StringRequest stringRequest;
+        while(iterator<100){
+                RequestFuture<String> future = RequestFuture.newFuture();
+                stringRequest = new StringRequest(Request.Method.GET, mBoardUrl + iterator, future, future);
+                VolleyApplication.getInstance().getRequestQueue().add(stringRequest);
+
+                String response = null;
+
+                try {
+                    response = future.get(20, TimeUnit.SECONDS);
+
+                } catch (TimeoutException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+                ArrayList<BoardNews> temp=parse(response);
+                temp.removeAll(mData);
+                for(BoardNews boardNews: temp){
+                    mData.add(0,boardNews);
+                }
+                boolean isDataBaseChanges=syncDB();
+                if(isDataBaseChanges){
+                    break;
+                }
+             iterator++;
+            }
+        return true;
     }
 
     public boolean fetchFromInternet(int startpage, boolean isNextPageNeeded) throws ExecutionException, InterruptedException {
         StringRequest stringRequest;
         for (int i=startpage; i<mPageIndex+1; i++){
             RequestFuture<String> future = RequestFuture.newFuture();
-            stringRequest = new StringRequest(Request.Method.POST, mBoardUrl+i, future, future);
+            stringRequest = new StringRequest(Request.Method.GET, mBoardUrl+i, future, future);
 
             VolleyApplication.getInstance().getRequestQueue().add(stringRequest);
             String response = null;
@@ -97,23 +137,35 @@ public class NewsLoader {
             } catch (TimeoutException e) {
                 e.printStackTrace();
             }
-            mData=parse(response);
-            mDataLoadResult =true;
+            if(response==null && mIsRecursive){
+                mIsRecursive=false;
+                fetchFromInternet(startpage,isNextPageNeeded);
+            }else{
+                mData=parse(response);
+                syncDB();
+                mIsDataLoadCorrectly =true;
+            }
+
         }
-        if(isNextPageNeeded || mPageIndex==1){
+        if(mIsDataLoadCorrectly && (isNextPageNeeded || mPageIndex==1)){
             mPageIndex++;
         }
-        return mDataLoadResult;
+
+        return mIsDataLoadCorrectly;
     }
 
     private ArrayList<BoardNews> parse(String HTML){
         ArrayList<BoardNews> newsArrayList = new ArrayList<>();
         Document doc =null;
+        if(HTML==null){
+            mErrorCode=1;
+            return  newsArrayList;
+        }
         try {
             doc = Jsoup.parse(HTML);
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            Log.e(null,e.getMessage(),e);
+            Log.e(TAG,""+e.getMessage(),e);
         }
         Elements articles = doc.select(".list-topic .topic.topic-type-topic.js-topic.out-topic");
         String imageUrl,
@@ -181,5 +233,9 @@ public class NewsLoader {
 
     public void setData(ArrayList<BoardNews> data) {
         mData = data;
+    }
+
+    public void fetchNewsOffline() {
+        mData=SugarORM.getNews();
     }
 }

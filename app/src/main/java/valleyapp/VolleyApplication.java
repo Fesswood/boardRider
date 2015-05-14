@@ -8,7 +8,7 @@ import com.android.volley.toolbox.Volley;
 /**
  * Created by Балдин Сергей on 06.05.2015.
  */
-public class VolleyApplication extends Application {
+public class VolleyApplication extends com.orm.SugarApp {
 
     private static VolleyApplication sInstance;
 

@@ -102,6 +102,7 @@ public class SplashScreenActivity extends AppCompatActivity implements
     public void onLoadFinished(android.content.Loader<ArrayList<BoardNews>> loader, ArrayList<BoardNews> data) {
         if(data.size()==0){
             mReloadBtn.setVisibility(View.VISIBLE);
+
             finish();
         }else{
             Intent i = new Intent(SplashScreenActivity.this, BoardRiderActivity.class);
@@ -145,7 +146,8 @@ public class SplashScreenActivity extends AppCompatActivity implements
                 if(NewsLoader.isOnline(context)){
                     isResultCorrect = mNewsLoader.fetchFromInternet(1, true);
                 }else{
-                    return BoardNewsORM.getPosts(context);
+                    mNewsLoader.fetchNewsOffline();
+                    isResultCorrect=true;
                 }
 
             } catch (ExecutionException e) {
