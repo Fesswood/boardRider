@@ -1,6 +1,7 @@
 package goodline.info.boardrider;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -30,6 +31,7 @@ import org.jsoup.select.Elements;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
+import goodline.info.notification.NotificationService;
 import goodline.info.sqllite.BoardNewsORM;
 import valleyapp.VolleyApplication;
 
@@ -39,9 +41,14 @@ import valleyapp.VolleyApplication;
  */
 public class BoardRiderFragment extends Fragment implements ListView.OnItemClickListener {
 
-    private static final String TAG= "BoardRiderFragment";
-    private static final String PAGE_INDEX = "goodline.info.boardrider.index";
+    public static final String TAG= "BoardRiderFragment";
+    public static final String PAGE_INDEX = "goodline.info.boardrider.index";
     public static final String SELECTED_NEWS = "goodline.info.boardrider.selected_news";
+    public static final String SERVICE_STANDARD = "goodline.info.boardrider.service_standard";
+
+    public static final String PREFS_NAME = "MyPrefsFile";
+    private boolean mPrefsisNotificationEnabled = true;
+
     private NewsRecordAdapter mAdapter;
     private NewsLoader mNewsLoader;
     private String mBoardUrl;
@@ -54,12 +61,21 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+
+        SharedPreferences settings = getActivity().getSharedPreferences(PREFS_NAME, 0);
+        mPrefsisNotificationEnabled = settings.getBoolean("Notification", true);
+
+
         mNewsLoader= new NewsLoader(mBoardUrl,getActivity());
+
         if (savedInstanceState != null) {
             mNewsLoader.setPageIndex(savedInstanceState.getInt(PAGE_INDEX, 0));
+        }else{
+            mNewsLoader.setPageIndex(2);
         }
         getActivity().setTitle("Новости");
         setHasOptionsMenu(true);
+
         mSwipyRefreshLayout = (SwipyRefreshLayout) getView().findViewById(R.id.refresh);
         mSwipyRefreshLayout.setDirection(SwipyRefreshLayoutDirection.BOTH);
         mSwipyRefreshLayout.setOnRefreshListener(new SwipyRefreshLayout.OnRefreshListener() {
@@ -75,10 +91,10 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
                         if (dir == SwipyRefreshLayoutDirection.BOTTOM) {
                             fetch(mNewsLoader.getPageIndex(),true, true);
                         } else {
-                           mNewsLoader.updateAllDB();
-                           mAdapter.prependNewsList(mNewsLoader.getData());
+                            update();
+
                         }
-                        Toast.makeText(getActivity(), R.string.refresh_finished, Toast.LENGTH_SHORT).show();
+
                     }
                 }, 2000);
             }
@@ -101,6 +117,43 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
         mListView.setOnItemClickListener(this);
     }
 
+    private void update() {
+        boolean isUpdated = mNewsLoader.updateAllDB();
+        if(!isUpdated && mNewsLoader.getErrorCode()== NewsLoader.INTERNET_CONNECTION_ERROR){
+            Toast.makeText(getActivity(), R.string.error_load_data, Toast.LENGTH_SHORT).show();
+        }else{
+            Toast.makeText(getActivity(), R.string.refresh_finished, Toast.LENGTH_SHORT).show();
+            mAdapter.prependNewsList(mNewsLoader.getData());
+        }
+    }
+    private void fetch(int startpage, boolean isScrollNeeded, boolean isNextPageNeeded){
+
+        boolean isDataFromInetLoaded=false,
+                isDataFromBDLoaded=mNewsLoader.fechFromDB(startpage, isNextPageNeeded);
+        if(isDataFromBDLoaded){
+            mAdapter.addNewslist(mNewsLoader.getData());
+            if(isScrollNeeded){
+                mListView.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        int nextViewPosition= (mListView.getLastVisiblePosition() - mListView.getFirstVisiblePosition())+1+mListView.getLastVisiblePosition();
+                        mListView.smoothScrollToPosition(nextViewPosition);
+                    }
+                },200);
+            }
+        }
+        else{
+            try {
+                mNewsLoader.fetchFromInternetWithListener(startpage,isNextPageNeeded,isScrollNeeded,mAdapter,mListView);
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
         super.onSaveInstanceState(savedInstanceState);
@@ -114,40 +167,17 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
         return inflater.inflate(R.layout.fragment_board_rider, container, false);
     }
 
-
-    private void fetch(int startpage, boolean isScrollNeeded, boolean isNextPageNeeded){
-
-        boolean isDataFromInetLoaded=false,
-                isDataFromBDLoaded=mNewsLoader.fechFromDB(startpage, isNextPageNeeded);
-
-        if(!isDataFromBDLoaded){
-            try {
-                isDataFromInetLoaded=  mNewsLoader.fetchFromInternet(startpage,isNextPageNeeded);
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        if(!isDataFromBDLoaded && !isDataFromInetLoaded){
-            Toast.makeText(getActivity(),  R.string.error_load_data, Toast.LENGTH_SHORT).show();
-        }else{
-            mAdapter.addAll(mNewsLoader.getData());
-            if(isScrollNeeded){
-                mListView.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        int nextViewPosition=getVisibleListItemsCount()+mListView.getLastVisiblePosition();
-                        mListView.smoothScrollToPosition(nextViewPosition);
-                    }
-                },200);
-            }
-        }
+    @Override
+    public void onStop() {
+        super.onStop();
+        SharedPreferences settings = getActivity().getSharedPreferences(PREFS_NAME, 0);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putBoolean("Notification", mPrefsisNotificationEnabled);
+        editor.commit();
     }
 
-    private int getVisibleListItemsCount(){
-        return (mListView.getLastVisiblePosition() - mListView.getFirstVisiblePosition()) + 1;
-    }
+
+
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -158,6 +188,12 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
     }
 
 
+
+    @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+        MenuItem checkable = menu.findItem(R.id.notification_state);
+        checkable.setChecked(mPrefsisNotificationEnabled);
+    }
 
     @Override
         public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -178,6 +214,23 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
         }
         if (id == R.id.action_to_bottom) {
             mListView.smoothScrollToPosition(mAdapter.getCount()-1);
+        }
+        if (id == R.id.clear_cache) {
+            mNewsLoader.clearDataBase();
+            mAdapter.getNewsList().clear();
+            mNewsLoader.setPageIndex(1);
+            fetch(1, false, true);
+        }
+        if (id == R.id.notification_state) {
+           mPrefsisNotificationEnabled=!mPrefsisNotificationEnabled;
+            if(mPrefsisNotificationEnabled){
+                Intent serviceIntent = new Intent(getActivity(),
+                       NotificationService.class);
+                serviceIntent.putExtra("url", "https://androidhotel.wordpress.com");
+                getActivity().startService(serviceIntent);
+            }else{
+                getActivity().stopService(new Intent(getActivity(),NotificationService.class));
+            }
         }
 
         return super.onOptionsItemSelected(item);

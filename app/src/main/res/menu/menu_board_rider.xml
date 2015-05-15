@@ -10,4 +10,12 @@
           android:title="@string/action_to_bottom"
           android:orderInCategory="100"
           app:showAsAction="never"/>
+    <item android:id="@+id/clear_cache"
+          android:title="@string/clear_cache"
+          android:orderInCategory="100"
+          app:showAsAction="never"/>
+    <item
+        android:id="@+id/notification_state"
+        android:checkable="true"
+        android:title="@string/checkable" />
 </menu>

@@ -1,5 +1,7 @@
 package goodline.info.boardrider;
 
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -8,9 +10,11 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -34,6 +38,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 
+import goodline.info.sqllite.SugarORM;
 import valleyapp.VolleyApplication;
 
 
@@ -99,8 +104,13 @@ public class boardNewsFragment extends Fragment implements TextView.OnClickListe
         return inflater.inflate(R.layout.fragment_board_news, container, false);
     }
     private void fetchArticle(){
+        Context context=getActivity();
+        if(!NewsLoader.isOnline(context) && mBoardNews.getArticleContent().length()==0){
+            showNoConnectionDialog(context);
+            mArticleView.setText(mBoardNews.getSmallDesc());
+        }else if(NewsLoader.isOnline(context)){
 
-        StringRequest stringRequest;
+            StringRequest stringRequest;
             stringRequest = new StringRequest(Request.Method.GET, mBoardNews.getArticleUrl(),
                     new Response.Listener<String>() {
                         @Override
@@ -115,7 +125,18 @@ public class boardNewsFragment extends Fragment implements TextView.OnClickListe
                 }
             });
             VolleyApplication.getInstance().getRequestQueue().add(stringRequest);
+
+        }else if(mBoardNews.getArticleContent().length()>0){
+
+            mArticleView.setText(Html.fromHtml(mBoardNews.getArticleContent(),
+                    new PicassoImageGetter(
+                            mArticleView,
+                            Resources.getSystem(),
+                            Picasso.with(getActivity())
+                    ), null));
         }
+
+    }
 
     private void parseAndSetArticle(String HTML){
          Document doc =null;
@@ -135,6 +156,11 @@ public class boardNewsFragment extends Fragment implements TextView.OnClickListe
                         Resources.getSystem(),
                         Picasso.with(getActivity())
                 ), null));
+        if(mBoardNews.getArticleContent().length()==0){
+            mBoardNews.setArticleContent("" + articleHTML);
+
+            new SaveOperation().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,null);
+        }
     }
 
     @Override
@@ -143,6 +169,12 @@ public class boardNewsFragment extends Fragment implements TextView.OnClickListe
         i.setData(Uri.parse(mBoardNews.getArticleUrl()));
         startActivity(i);
     }
+    @Override
+    public void onResume() {
+        fetchArticle();
+        super.onResume();
+    }
+
 
     public class PicassoImageGetter implements Html.ImageGetter {
 
@@ -234,5 +266,48 @@ public class boardNewsFragment extends Fragment implements TextView.OnClickListe
 
         return super.onOptionsItemSelected(item);
     }
-  
+    public static void showNoConnectionDialog(Context ctx1)
+    {
+        final Context ctx = ctx1;
+        AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
+        builder.setCancelable(true);
+        builder.setMessage(R.string.no_connection);
+        builder.setTitle(R.string.no_connection_title);
+        builder.setPositiveButton(R.string.settings_button_text, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which)
+            {
+                ctx.startActivity(new Intent(Settings.ACTION_WIRELESS_SETTINGS));
+            }
+        });
+
+        builder.setNegativeButton(R.string.cancel_button_text, new DialogInterface.OnClickListener()
+        {
+            public void onClick(DialogInterface dialog, int which)
+            {
+                return;
+            }
+        });
+
+        builder.setOnCancelListener(new DialogInterface.OnCancelListener()
+        {
+            public void onCancel(DialogInterface dialog) {
+                return;
+            }
+        });
+
+        builder.show();
+    }
+    private class SaveOperation extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            SugarORM.updateNews(mBoardNews);
+          return null;
+        }
+
+
+        @Override
+        protected void onProgressUpdate(Void... values) {}
+    }
+
 }

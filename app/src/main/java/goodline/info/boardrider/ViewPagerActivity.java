@@ -69,6 +69,7 @@ public class ViewPagerActivity extends FragmentActivity {
                 if (boardNews.getTitle() != null) {
                     setTitle(boardNews.getTitle());
                 }
+
             }
         });
     }

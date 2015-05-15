@@ -1,14 +1,11 @@
 package goodline.info.boardrider;
 
 
-import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.orm.SugarRecord;
 import com.orm.dsl.Ignore;
-
-import org.w3c.dom.Text;
 
 import java.text.DateFormat;
 import java.text.DateFormatSymbols;
@@ -26,30 +23,30 @@ public class BoardNews extends SugarRecord<BoardNews> implements Comparable<Boar
   private  String mSmallDesc;
   private  String mImageUrl;
   private  String mArticleUrl;
+  private  String mArticleContent;
   private long mTimeStamp;
-  @Ignore
-  private  String mStringDate;
   @Ignore
   public static DateFormat sJUD;
 
     public BoardNews(String title, String smallDesc, String imageUrl, String articleUrl, long timeStamp) {
         this.mSmallDesc=smallDesc;
-        this.mStringDate = "";
         this.mTitle = title;
         this.mImageUrl = imageUrl;
         this.mArticleUrl=articleUrl;
+        this.mTimeStamp=timeStamp;
+        this.mArticleContent="";
         JUDInit();
-        this.mStringDate= sJUD.format(new Date(timeStamp));
+
     }
     public BoardNews(String title, String smallDesc, String imageUrl, String articleUrl, String stringDate) {
         this.mSmallDesc=smallDesc;
-        this.mStringDate = stringDate;
         this.mTitle = title;
         this.mImageUrl = imageUrl;
         this.mArticleUrl=articleUrl;
+        this.mArticleContent="";
         JUDInit();
         try {
-                this.mTimeStamp=sJUD.parse(stringDate).getTime();
+            this.mTimeStamp=sJUD.parse(stringDate).getTime();
         } catch (ParseException e) {
             e.printStackTrace();
             mTimeStamp=0;
@@ -63,8 +60,8 @@ public class BoardNews extends SugarRecord<BoardNews> implements Comparable<Boar
         mSmallDesc = "";
         mImageUrl = "";
         mArticleUrl = "";
-        mStringDate = "";
         mTimeStamp=0;
+        setArticleContent("");
         JUDInit();
     }
     private void JUDInit() {
@@ -107,11 +104,18 @@ public class BoardNews extends SugarRecord<BoardNews> implements Comparable<Boar
     }
 
     public String getStringDate() {
-        return mStringDate;
+        Date d= new Date(mTimeStamp);
+
+        return sJUD.format(d);
     }
 
     public void setStringDate(String stringDate) {
-        mStringDate = stringDate;
+        try {
+            this.mTimeStamp=sJUD.parse(stringDate).getTime();
+        } catch (ParseException e) {
+            e.printStackTrace();
+            mTimeStamp=0;
+        }
     }
 
     @Override
@@ -150,13 +154,16 @@ public class BoardNews extends SugarRecord<BoardNews> implements Comparable<Boar
         dest.writeString(mSmallDesc);
         dest.writeString(mImageUrl);
         dest.writeString(mArticleUrl);
-        dest.writeString(mStringDate);
+        dest.writeLong(mTimeStamp);
+        dest.writeString(mArticleContent);
     }
     // this is used to regenerate your object. All Parcelables must have a CREATOR that implements these two methods
     public static final Parcelable.Creator<BoardNews> CREATOR = new Parcelable.Creator<BoardNews>() {
 
         public BoardNews createFromParcel(Parcel in) {
-            return new BoardNews(in.readString(), in.readString(), in.readString(),in.readString(),in.readLong());
+         BoardNews createdParcel = new BoardNews(in.readString(), in.readString(), in.readString(),in.readString(),in.readLong());
+            createdParcel.setArticleContent(in.readString());
+            return createdParcel;
         }
 
         public BoardNews[] newArray(int size) {
@@ -179,4 +186,11 @@ public class BoardNews extends SugarRecord<BoardNews> implements Comparable<Boar
         mTimeStamp = timeStamp;
     }
 
+    public String getArticleContent() {
+        return mArticleContent;
+    }
+
+    public void setArticleContent(String articleContent) {
+        mArticleContent = articleContent;
+    }
 }

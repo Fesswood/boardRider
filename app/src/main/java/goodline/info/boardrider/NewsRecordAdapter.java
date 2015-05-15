@@ -48,7 +48,7 @@ public class NewsRecordAdapter extends ArrayAdapter<BoardNews> {
 
             ImageView imageView = (ImageView) convertView.findViewById(R.id.news_image);
 
-            if(!newsItem.getImageUrl().isEmpty() && NewsLoader.isOnline(getContext())){
+            if(!newsItem.getImageUrl().isEmpty()){
                 Picasso.with(getContext())
                         .load(newsItem.getImageUrl())
                         .into(imageView);

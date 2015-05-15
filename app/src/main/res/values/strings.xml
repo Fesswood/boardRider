@@ -15,4 +15,10 @@
     <string name="dummy_content">DUMMY\nCONTENT</string>
     <string name="action_to_top">Пролистать Наверх</string>
     <string name="action_to_bottom">Пролистать Вниз</string>
+    <string name="no_connection">Увы, но мы не можем загрузить новости без интернета.</string>
+    <string name="no_connection_title">Включить Интернет</string>
+    <string name="settings_button_text">включить</string>
+    <string name="cancel_button_text">Работать оффлайн</string>
+    <string name="clear_cache">Удалить кеш новостей</string>
+    <string name="checkable">Слать Уведомления</string>
 </resources>

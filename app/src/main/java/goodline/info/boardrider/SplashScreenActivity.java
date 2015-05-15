@@ -102,8 +102,6 @@ public class SplashScreenActivity extends AppCompatActivity implements
     public void onLoadFinished(android.content.Loader<ArrayList<BoardNews>> loader, ArrayList<BoardNews> data) {
         if(data.size()==0){
             mReloadBtn.setVisibility(View.VISIBLE);
-
-            finish();
         }else{
             Intent i = new Intent(SplashScreenActivity.this, BoardRiderActivity.class);
             i.putExtra(NEWS_LIST, data);
@@ -137,17 +135,21 @@ public class SplashScreenActivity extends AppCompatActivity implements
          * data to be published by the loader.
          */
         @Override public ArrayList<BoardNews> loadInBackground() {
-            // Retrieve all known applications.
-            NewsLoader mNewsLoader = new NewsLoader("http://live.goodline.info/guest/page");
 
             final Context context = getContext();
+            NewsLoader mNewsLoader = new NewsLoader("http://live.goodline.info/guest/page",context);
             boolean isResultCorrect = false;
+
             try {
-                if(NewsLoader.isOnline(context)){
-                    isResultCorrect = mNewsLoader.fetchFromInternet(1, true);
-                }else{
-                    mNewsLoader.fetchNewsOffline();
+                mNewsLoader.fetchNewsOffline();
+                if(mNewsLoader.getData().size()>0){
+
                     isResultCorrect=true;
+
+                }else if(NewsLoader.isOnline(context)){
+
+                    isResultCorrect = mNewsLoader.fetchFromInternet(1, true);
+
                 }
 
             } catch (ExecutionException e) {

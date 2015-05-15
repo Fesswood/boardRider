@@ -17,7 +17,7 @@ public class SugarORM {
     }
     public static ArrayList<BoardNews> getNewsFromPage(int startpage, int pageNumber) {
       //  List<BoardNews> oldNewsList = BoardNews.find(BoardNews.class,null,null,null,"ORDER BY m_time_stamp DESC", "LIMIT" + (10 * pageNumber), "OFFSET" + (10 * startpage));
-        List<BoardNews> oldNewsList = BoardNews.findWithQuery(BoardNews.class,"Select * from BoardNews LIMIT ? OFFSET ?",""+(10 * pageNumber),""+ (10 * startpage));
+        List<BoardNews> oldNewsList = BoardNews.find(BoardNews.class, null, null, null,"m_time_stamp desc", "" + (10 * startpage) + "," + (10 * pageNumber));
         return new ArrayList<>(oldNewsList);
     }
     public static ArrayList<BoardNews> getNewsByDate(BoardNews firstBoardNews, BoardNews lastBoardNews) {
@@ -27,6 +27,15 @@ public class SugarORM {
     public static void insertNews(ArrayList<BoardNews> news) {
         for(BoardNews boardNews: news){
            boardNews.save();
+        }
+    }
+
+    public static void updateNews(BoardNews boardNews) {
+        List<BoardNews> news = BoardNews.findWithQuery(BoardNews.class, "Select * from BOARD_NEWS where m_time_stamp = ?", ""+boardNews.getTimeStamp());
+        if(news.size()>0){
+            BoardNews selectedBoardNews = news.get(0);
+            selectedBoardNews.setArticleContent(boardNews.getArticleContent());
+            selectedBoardNews.save();
         }
     }
 }
