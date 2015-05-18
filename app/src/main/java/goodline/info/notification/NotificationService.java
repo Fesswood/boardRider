@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
 import goodline.info.boardrider.BoardNews;
+import goodline.info.boardrider.BoardRiderActivity;
 import goodline.info.boardrider.BoardRiderFragment;
 import goodline.info.boardrider.NewsLoader;
 import goodline.info.boardrider.R;
@@ -33,9 +34,8 @@ public class NotificationService extends IntentService {
     private NewsLoader mDataLoader;
     private static final String DEBUG_TAG = "NotificationService";
 
-    public static final String ACTION_NOTIFY = "com.androidhotel.simplenotification.SimpleIntentService.DATA_RETRIEVED";
     public static final String PARAM_RECEIVE_NEWS = "receiveNews";
-    public static final String PARAM_NEWS_FLAG = "toBoardNewsFragment";
+    public static final String NOTI_HAS_NEWS = "hasNewsNOTIPLEASEHELPME";
 
     public NotificationService() {
         super(DEBUG_TAG);
@@ -67,7 +67,7 @@ public class NotificationService extends IntentService {
     private void sendBroadcast(BoardNews receiveNews)
     {
         Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(NotificationService.ACTION_NOTIFY);
+        broadcastIntent.setAction(NotificationService.NOTI_HAS_NEWS);
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
         broadcastIntent.putExtra(PARAM_RECEIVE_NEWS, receiveNews);
         sendBroadcast(broadcastIntent, Permissions.SEND_NOTIFICATIONS);
@@ -76,10 +76,12 @@ public class NotificationService extends IntentService {
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     private void sendNotif(BoardNews receiveNews) {
-        Intent intent = new Intent(this, BoardRiderFragment.class);
-        intent.putExtra(PARAM_RECEIVE_NEWS,receiveNews);
-        intent.putExtra(PARAM_NEWS_FLAG,true);
-        PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, 0);
+
+        Intent intent = new Intent().setClass(this, BoardRiderActivity.class);
+        intent.setAction(NOTI_HAS_NEWS);
+        intent.putExtra(PARAM_RECEIVE_NEWS, receiveNews);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pIntent =  PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         Notification notification  = new Notification.Builder(this)
                 .setContentTitle(receiveNews.getTitle())

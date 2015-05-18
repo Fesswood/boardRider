@@ -29,6 +29,7 @@ public class NewsRecordAdapter extends ArrayAdapter<BoardNews> {
     }
 
     public void addNewslist(ArrayList<BoardNews> parsedNewsList) {
+        parsedNewsList.removeAll(mNewslist);
         mNewslist.addAll(parsedNewsList);
         notifyDataSetChanged();
     }

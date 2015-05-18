@@ -33,6 +33,7 @@ public class SplashScreenActivity extends AppCompatActivity implements
     private Button mReloadBtn;
     private TextView mStatusTextView;
     public static final  String NEWS_LIST="goodline.info.boardrider.news_list";
+    public static final  String SPLASH_HAS_NEWS="splashHasNews";
 
     public void onAttachedToWindow() {
         super.onAttachedToWindow();
@@ -104,6 +105,7 @@ public class SplashScreenActivity extends AppCompatActivity implements
             mReloadBtn.setVisibility(View.VISIBLE);
         }else{
             Intent i = new Intent(SplashScreenActivity.this, BoardRiderActivity.class);
+            i.setAction(SPLASH_HAS_NEWS);
             i.putExtra(NEWS_LIST, data);
             startActivity(i);
             finish();

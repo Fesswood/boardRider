@@ -1,5 +1,8 @@
 package goodline.info.boardrider;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.support.annotation.Nullable;
@@ -36,6 +39,9 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
     public static final String NEWS_TO_COMPARE = "goodline.info.boardrider.service_standard";
 
     public static final String PREFS_NAME = "MyPrefsFile";
+    private static final int GET_NEWS_FROM_SPLASH = 0;
+    private static final int GET_NEWS_FROM_NOTI = 1;
+    private boolean afterOnCreate= false;
     private boolean mPrefsisNotificationEnabled = true;
 
     private NewsRecordAdapter mAdapter;
@@ -43,6 +49,9 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
     private String mBoardUrl;
     private SwipyRefreshLayout mSwipyRefreshLayout;
     private ListView mListView;
+
+    private AlarmManager mAlarmMgr;
+    private PendingIntent mStartServiceIntent;
 
     public BoardRiderFragment() {
         mBoardUrl="http://live.goodline.info/guest/page";
@@ -91,31 +100,37 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
 
         mAdapter =  BoardNewsLab.get(getActivity()).getNewsRecordAdapter();
 
-        if (getActivity().getIntent().getExtras() != null) {
-          ArrayList<BoardNews> loadedNews = getActivity().getIntent().getExtras().getParcelableArrayList(SplashScreenActivity.NEWS_LIST);
-            if(loadedNews.size()!=0){
-                mAdapter.addNewslist(loadedNews);
-            }else{
-                fetch(1, false, false);
-            }
-            BoardNews notiNews = (BoardNews) getActivity().getIntent().getExtras().get(NotificationService.PARAM_RECEIVE_NEWS);
-            if(notiNews!=null){
-                if(mAdapter.getNewsList().get(0).compareTo(notiNews)==1){
-                    mAdapter.getNewsList().add(0,notiNews);
-                    startViewPagerActivity(notiNews);
-                }
-
-            }
-
-        }else{
-            fetch(1, false, false);
-        }
+        checkExtras(getActivity().getIntent(),GET_NEWS_FROM_SPLASH);
         if(mPrefsisNotificationEnabled){
             startService();
         }
         mListView = (ListView) getView().findViewById(R.id.news_list);
         mListView.setAdapter(mAdapter);
         mListView.setOnItemClickListener(this);
+    }
+
+    private void checkExtras(Intent intent, int flag) {
+        Intent intent1 = ((BoardRiderActivity) getActivity()).popLastIntent();
+        Bundle extras =intent1.getExtras();
+        if (extras != null) {
+            if (intent1.getAction().equals(SplashScreenActivity.SPLASH_HAS_NEWS)) {
+                ArrayList<BoardNews> loadedNews = extras.getParcelableArrayList(SplashScreenActivity.NEWS_LIST);
+                if (loadedNews != null) {
+                    mAdapter.addNewslist(loadedNews);
+                } else {
+                    fetch(1, false, false);
+                }
+            }else if(intent1.getAction().equals(NotificationService.NOTI_HAS_NEWS)){
+
+                BoardNews notiNews = (BoardNews) extras.get(NotificationService.PARAM_RECEIVE_NEWS);
+                if (notiNews !=null){
+                    if(mAdapter.getNewsList().get(0).compareTo(notiNews)==1){
+                        mAdapter.getNewsList().add(0, notiNews);
+                    }
+                    startViewPagerActivity(notiNews);
+                }
+            }
+        }
     }
 
     private void update() {
@@ -177,8 +192,14 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
         editor.commit();
     }
 
-
-
+    @Override
+    public void onResume() {
+        super.onResume();
+        if(afterOnCreate){
+            checkExtras(getActivity().getIntent(), GET_NEWS_FROM_NOTI);
+        }
+        afterOnCreate=true;
+    }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -238,14 +259,25 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
     }
 
     private void stopService() {
-        getActivity().stopService(new Intent(getActivity(),NotificationService.class));
+        if (mAlarmMgr!= null) {
+            mAlarmMgr.cancel(mStartServiceIntent);
+        }
     }
 
     private void startService() {
         Intent serviceIntent = new Intent(getActivity(),
                NotificationService.class);
+
         BoardNews newsToCompare = mAdapter.getNewsList().get(0);
+
         serviceIntent.putExtra(NEWS_TO_COMPARE, newsToCompare);
-        getActivity().startService(serviceIntent);
+
+        Context context = getActivity();
+
+        mStartServiceIntent = PendingIntent.getService(context, 0, serviceIntent, 0);
+
+        mAlarmMgr =(AlarmManager) context.getSystemService(context.ALARM_SERVICE);
+        mAlarmMgr.setInexactRepeating(AlarmManager.RTC_WAKEUP,
+                System.currentTimeMillis(), 1*60*1000, mStartServiceIntent);
     }
 }
