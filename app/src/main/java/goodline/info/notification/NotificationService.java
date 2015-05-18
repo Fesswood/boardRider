@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.Context;
 import android.util.Log;
 
+import java.security.Permissions;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -24,6 +25,9 @@ public class NotificationService extends IntentService {
     private NewsLoader mDataLoader;
     private static final String DEBUG_TAG = "NotificationService";
 
+    public static final String ACTION_NOTIFY = "goodline.info.notification.DATA_RETRIEVED";
+    public static final String PARAM_OUT_COUNT = "count";
+
     public NotificationService() {
         super(DEBUG_TAG);
 
@@ -40,7 +44,7 @@ public class NotificationService extends IntentService {
                 BoardNews boardNews = mDataLoader.getData().get(0);
                 int isFetchingNewsLater = mNewsFromBD.compareTo(boardNews);
                 if(isFetchingNewsLater==1){
-                    Log.d(DEBUG_TAG, "News received!");
+                    Log.d(DEBUG_TAG, "DATA_RETRIEVED!");
                 }
             }
         } catch (ExecutionException e) {
@@ -48,6 +52,13 @@ public class NotificationService extends IntentService {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
+    }
+    private void sendSimpleBroadcast(int count)
+    {
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction(NotificationService.ACTION_NOTIFY);
+        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
+        broadcastIntent.putExtra(PARAM_OUT_COUNT, count);
+        sendBroadcast(broadcastIntent, Permissions.SEND_SIMPLE_NOTIFICATIONS);
     }
 }
