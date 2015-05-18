@@ -17,23 +17,12 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
 import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayoutDirection;
-
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
 import goodline.info.notification.NotificationService;
-import goodline.info.sqllite.BoardNewsORM;
-import valleyapp.VolleyApplication;
 
 
 /**
@@ -44,7 +33,7 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
     public static final String TAG= "BoardRiderFragment";
     public static final String PAGE_INDEX = "goodline.info.boardrider.index";
     public static final String SELECTED_NEWS = "goodline.info.boardrider.selected_news";
-    public static final String SERVICE_STANDARD = "goodline.info.boardrider.service_standard";
+    public static final String NEWS_TO_COMPARE = "goodline.info.boardrider.service_standard";
 
     public static final String PREFS_NAME = "MyPrefsFile";
     private boolean mPrefsisNotificationEnabled = true;
@@ -109,8 +98,20 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
             }else{
                 fetch(1, false, false);
             }
+            BoardNews notiNews = (BoardNews) getActivity().getIntent().getExtras().get(NotificationService.PARAM_RECEIVE_NEWS);
+            if(notiNews!=null){
+                if(mAdapter.getNewsList().get(0).compareTo(notiNews)==1){
+                    mAdapter.getNewsList().add(0,notiNews);
+                    startViewPagerActivity(notiNews);
+                }
+
+            }
+
         }else{
-          fetch(1, false, false);
+            fetch(1, false, false);
+        }
+        if(mPrefsisNotificationEnabled){
+            startService();
         }
         mListView = (ListView) getView().findViewById(R.id.news_list);
         mListView.setAdapter(mAdapter);
@@ -182,11 +183,14 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         BoardNews boardNews = mAdapter.getItem(position);
+        startViewPagerActivity(boardNews);
+    }
+
+    private void startViewPagerActivity(BoardNews boardNews) {
         Intent i = new Intent(getActivity(), ViewPagerActivity.class);
         i.putExtra(BoardRiderFragment.SELECTED_NEWS, boardNews);
         startActivity(i);
     }
-
 
 
     @Override
@@ -224,15 +228,24 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
         if (id == R.id.notification_state) {
            mPrefsisNotificationEnabled=!mPrefsisNotificationEnabled;
             if(mPrefsisNotificationEnabled){
-                Intent serviceIntent = new Intent(getActivity(),
-                       NotificationService.class);
-                serviceIntent.putExtra("url", "https://androidhotel.wordpress.com");
-                getActivity().startService(serviceIntent);
+                startService();
             }else{
-                getActivity().stopService(new Intent(getActivity(),NotificationService.class));
+                stopService();
             }
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void stopService() {
+        getActivity().stopService(new Intent(getActivity(),NotificationService.class));
+    }
+
+    private void startService() {
+        Intent serviceIntent = new Intent(getActivity(),
+               NotificationService.class);
+        BoardNews newsToCompare = mAdapter.getNewsList().get(0);
+        serviceIntent.putExtra(NEWS_TO_COMPARE, newsToCompare);
+        getActivity().startService(serviceIntent);
     }
 }

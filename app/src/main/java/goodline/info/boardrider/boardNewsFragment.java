@@ -199,7 +199,7 @@ public class boardNewsFragment extends Fragment implements TextView.OnClickListe
                 @Override
                 protected Bitmap doInBackground(final Void... meh) {
                     try {
-                        return pablo.load(source).get();
+                        return pablo.load(source).resize(300,300).onlyScaleDown().centerCrop().get();
                     } catch (Exception e) {
                         return null;
                     }
