@@ -21,4 +21,7 @@
     <string name="cancel_button_text">Работать оффлайн</string>
     <string name="clear_cache">Удалить кеш новостей</string>
     <string name="checkable">Слать Уведомления</string>
+    <string name="refresh_finished_for_page">Обновили список новостей со страницы:</string>
+    <string name="refresh_finished_for_all_pages">Обновление завершены</string>
+    <string name="no_fresh_news">Новых новостей не поступало</string>
 </resources>

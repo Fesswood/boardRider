@@ -21,7 +21,12 @@ public class SugarORM {
         return new ArrayList<>(oldNewsList);
     }
     public static ArrayList<BoardNews> getNewsByDate(BoardNews firstBoardNews, BoardNews lastBoardNews) {
-      List<BoardNews> oldNewsList =  BoardNews.find(BoardNews.class, "m_time_stamp between ? and ?", ""+firstBoardNews.getTimeStamp(), ""+lastBoardNews.getTimeStamp());
+        String WhereStatemnt= "m_time_stamp between "+firstBoardNews.getTimeStamp()+" and "+lastBoardNews.getTimeStamp();
+        List<BoardNews> temp =  BoardNews.find(BoardNews.class,  "m_time_stamp=?",""+firstBoardNews.getTimeStamp());
+        List<BoardNews> temp1 =  BoardNews.find(BoardNews.class,  "m_time_stamp=?",""+lastBoardNews.getTimeStamp());
+      List<BoardNews> oldNewsList =  BoardNews.find(BoardNews.class, "m_time_stamp >= ? and m_time_stamp <= ?"
+                                                                              ,""+firstBoardNews.getTimeStamp()
+                                                                              ,""+lastBoardNews.getTimeStamp());
       return new ArrayList<>(oldNewsList);
     }
     public static void insertNews(ArrayList<BoardNews> news) {

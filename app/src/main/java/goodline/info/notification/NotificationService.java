@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Bundle;
 import android.util.Log;
 
 import com.squareup.picasso.Picasso;
@@ -77,9 +78,15 @@ public class NotificationService extends IntentService {
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     private void sendNotif(BoardNews receiveNews) {
 
+
+        Bundle bundle = new Bundle();
+        bundle.putParcelable(BoardNews.PACKAGE_CLASS, receiveNews);
+
+
+
         Intent intent = new Intent().setClass(this, BoardRiderActivity.class);
         intent.setAction(NOTI_HAS_NEWS);
-        intent.putExtra(PARAM_RECEIVE_NEWS, receiveNews);
+        intent.putExtra(BoardNews.PACKAGE_CLASS, bundle);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pIntent =  PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 

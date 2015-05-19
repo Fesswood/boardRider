@@ -121,8 +121,8 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
                     fetch(1, false, false);
                 }
             }else if(intent1.getAction().equals(NotificationService.NOTI_HAS_NEWS)){
-
-                BoardNews notiNews = (BoardNews) extras.get(NotificationService.PARAM_RECEIVE_NEWS);
+                Bundle oldBundle = intent1.getBundleExtra(BoardNews.PACKAGE_CLASS);
+                BoardNews notiNews = (BoardNews) oldBundle.getParcelable(BoardNews.PACKAGE_CLASS);
                 if (notiNews !=null){
                     if(mAdapter.getNewsList().get(0).compareTo(notiNews)==1){
                         mAdapter.getNewsList().add(0, notiNews);
@@ -134,13 +134,14 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
     }
 
     private void update() {
-        boolean isUpdated = mNewsLoader.updateAllDB();
-        if(!isUpdated && mNewsLoader.getErrorCode()== NewsLoader.INTERNET_CONNECTION_ERROR){
+        mNewsLoader.setAdapter(mAdapter);
+        mNewsLoader.updateAllDB();
+        /* if(!isUpdated && mNewsLoader.getErrorCode()== NewsLoader.INTERNET_CONNECTION_ERROR){
             Toast.makeText(getActivity(), R.string.error_load_data, Toast.LENGTH_SHORT).show();
         }else{
             Toast.makeText(getActivity(), R.string.refresh_finished, Toast.LENGTH_SHORT).show();
             mAdapter.prependNewsList(mNewsLoader.getData());
-        }
+        }*/
     }
     private void fetch(int startpage, boolean isScrollNeeded, boolean isNextPageNeeded){
 

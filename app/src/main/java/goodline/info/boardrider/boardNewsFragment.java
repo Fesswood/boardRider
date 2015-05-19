@@ -143,8 +143,7 @@ public class boardNewsFragment extends Fragment implements TextView.OnClickListe
         try {
             doc = Jsoup.parse(HTML);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            Log.e(null,e.getMessage(),e);
+            Log.e(TAG,e.getMessage(),e);
         }
         Elements article = doc.select(".topic-content.text");
         String articleHTML=article.html();

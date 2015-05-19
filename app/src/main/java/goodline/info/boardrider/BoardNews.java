@@ -25,6 +25,7 @@ public class BoardNews extends SugarRecord<BoardNews> implements Comparable<Boar
   private  String mArticleUrl;
   private  String mArticleContent;
   private long mTimeStamp;
+  public static final  String PACKAGE_CLASS="goodline.info.boardrider.SugarRecord";
   @Ignore
   public static DateFormat sJUD;
 

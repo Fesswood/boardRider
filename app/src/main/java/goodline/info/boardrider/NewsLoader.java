@@ -35,6 +35,7 @@ public class NewsLoader {
 
 
     private int mPageIndex=1;
+    private int mUpdatePageIndex=1;
     private Context mContext;
     private String mBoardUrl;
     private String mErrorMessage;
@@ -42,6 +43,7 @@ public class NewsLoader {
     private ArrayList<BoardNews> mData;
     private boolean mIsDataLoadCorrectly;
     private boolean mIsRecursive=true;
+    private boolean  mIsUpdateLoopBreak=false;
 
 
 
@@ -87,7 +89,7 @@ public class NewsLoader {
                 return true;
             }else{
                 boolean isCollectionModified = mData.removeAll(newsBetweenDates);
-                if(isCollectionModified){
+                if(isCollectionModified && mData.size()>0){
                     SugarORM.insertNews(mData);
                     mData.addAll(newsBetweenDates);
                     return true;
@@ -96,42 +98,53 @@ public class NewsLoader {
         return false;
     }
 
-    public boolean updateAllDB(){
+    public void updateAllDB(){
         if(!NewsLoader.isOnline(mContext)){
             mErrorCode=INTERNET_CONNECTION_ERROR;
-            return false;
+            return;
         }
-        int iterator=1;
+        mData=new ArrayList<>(mAdapter.getNewsList());
         StringRequest stringRequest;
-        while(iterator<100){
-                RequestFuture<String> future = RequestFuture.newFuture();
-                stringRequest = new StringRequest(Request.Method.GET, mBoardUrl + iterator, future, future);
-                VolleyApplication.getInstance().getRequestQueue().add(stringRequest);
+            stringRequest = new StringRequest(Request.Method.GET, mBoardUrl+mUpdatePageIndex,
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            if(!mIsUpdateLoopBreak){
+                                ArrayList<BoardNews> temp=parse(response);
+                                temp.removeAll(mData);
+                                for(BoardNews boardNews: temp){
+                                    mData.add(0,boardNews);
+                                }
+                                boolean isDataBaseChanges=syncDB();
 
-                String response = null;
+                                if(isDataBaseChanges){
+                                    if(mContext!=null){
+                                        Toast.makeText(mContext, R.string.refresh_finished_for_all_pages, Toast.LENGTH_SHORT).show();
+                                    }
+                                    mUpdatePageIndex++;
+                                    NewsLoader.this.updateAllDB();
+                                }else{
+                                    if(mContext!=null){
+                                        Toast.makeText(mContext, R.string.no_fresh_news, Toast.LENGTH_SHORT).show();
+                                    }
+                                    mAdapter.prependNewsList(mData);
+                                    mPageIndex=++mUpdatePageIndex;
+                                    mIsUpdateLoopBreak=true;
+                                }
 
-                try {
-                    response = future.get(20, TimeUnit.SECONDS);
-
-                } catch (TimeoutException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
+                            }
+                        }
+                    }
+                    ,new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    if(mContext!=null){
+                        Toast.makeText(mContext, R.string.error_load_data, Toast.LENGTH_SHORT).show();
+                    }
+                    Log.e(TAG,"error "+error.getMessage());
                 }
-                ArrayList<BoardNews> temp=parse(response);
-                temp.removeAll(mData);
-                for(BoardNews boardNews: temp){
-                    mData.add(0,boardNews);
-                }
-                boolean isDataBaseChanges=syncDB();
-                if(isDataBaseChanges){
-                    break;
-                }
-             iterator++;
-            }
-        return true;
+            });
+            VolleyApplication.getInstance().getRequestQueue().add(stringRequest);
     }
 
     public boolean fetchFromInternet(int startpage, boolean isNextPageNeeded) throws ExecutionException, InterruptedException {
@@ -238,7 +251,7 @@ public class NewsLoader {
             doc = Jsoup.parse(HTML);
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            Log.e(TAG,""+e.getMessage(),e);
+            Log.e(TAG, "" + e.getMessage(), e);
         }
         Element article = doc.select(".list-topic .topic.topic-type-topic.js-topic.out-topic").first();
 
@@ -254,7 +267,6 @@ public class NewsLoader {
         try {
             doc = Jsoup.parse(HTML);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             Log.e(TAG,""+e.getMessage(),e);
         }
         Elements articles = doc.select(".list-topic .topic.topic-type-topic.js-topic.out-topic");
@@ -341,5 +353,9 @@ public class NewsLoader {
 
     public void clearDataBase() {
         BoardNews.deleteAll(BoardNews.class);
+    }
+
+    public void setAdapter(NewsRecordAdapter adapter) {
+        this.mAdapter = adapter;
     }
 }
