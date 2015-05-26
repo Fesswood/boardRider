@@ -24,4 +24,7 @@
     <string name="refresh_finished_for_page">Обновили список новостей со страницы:</string>
     <string name="refresh_finished_for_all_pages">Обновление завершены</string>
     <string name="no_fresh_news">Новых новостей не поступало</string>
+    <string name="title_activity_activity_image_gallery">activityImageGallery</string>
+
+    <string name="hello_world">Hello world!</string>
 </resources>

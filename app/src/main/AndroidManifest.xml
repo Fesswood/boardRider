@@ -11,10 +11,12 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
-        <permission android:name="goodline.info.notification.Permissions.SEND_NOTIFICATIONS"
-                    android:label="permission to send simple notifications"
-                    android:permissionGroup="android.permission-group.PERSONAL_INFO"
-                    android:protectionLevel="normal" />
+        <permission
+            android:name="goodline.info.notification.Permissions.SEND_NOTIFICATIONS"
+            android:label="permission to send simple notifications"
+            android:permissionGroup="android.permission-group.PERSONAL_INFO"
+            android:protectionLevel="normal" />
+
         <meta-data
             android:name="DATABASE"
             android:value="board_news_articleContent.db" />
@@ -31,8 +33,8 @@
         <activity
             android:name=".BoardRiderActivity"
             android:clearTaskOnLaunch="true"
-            android:launchMode="singleTop"
-            android:label="@string/title_activity_board_rider" >
+            android:label="@string/title_activity_board_rider"
+            android:launchMode="singleTop" >
         </activity>
         <activity
             android:name=".ViewPagerActivity"
@@ -56,13 +58,21 @@
             android:name="goodline.info.notification.NotificationService"
             android:exported="false" >
         </service>
-        <receiver android:name="goodline.info.notification.NewsBroadcastReceiver"
-                  android:permission="goodline.info.notification.Permissions.SEND_NOTIFICATIONS">
+
+        <receiver
+            android:name="goodline.info.notification.NewsBroadcastReceiver"
+            android:permission="goodline.info.notification.Permissions.SEND_NOTIFICATIONS" >
             <intent-filter>
-                <action android:name="goodline.info.notification.Permissions.DATA_RETRIEVED"    />
+                <action android:name="goodline.info.notification.Permissions.DATA_RETRIEVED" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
+
+        <activity
+            android:name="goodline.info.imagegallery.activityImageGallery"
+            android:label="@string/title_activity_activity_image_gallery" >
+        </activity>
     </application>
 
 </manifest>
