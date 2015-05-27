@@ -60,7 +60,7 @@ public class FullScreenImageAdapter extends PagerAdapter {
                 false);
 
         imgDisplay = (ImageView) viewLayout.findViewById(R.id.imgDispImgGal);
-        btnClose = (Button) viewLayout.findViewById(R.id.btnCloseImgGal);
+
 
         String currentImageLink = mImageLinks.get(position);
 
@@ -77,16 +77,6 @@ public class FullScreenImageAdapter extends PagerAdapter {
                     .centerCrop()
                     .into(imgDisplay);
         }
-
-
-
-        // close button click event
-        btnClose.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                _activity.finish();
-            }
-        });
 
         ((ViewPager) container).addView(viewLayout);
 

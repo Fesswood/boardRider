@@ -1,39 +1,44 @@
 package goodline.info.imagegallery;
 
+import android.content.Intent;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import goodline.info.boardrider.R;
+import java.util.ArrayList;
 
-public class activityImageGallery extends ActionBarActivity {
+import goodline.info.boardrider.R;
+import goodline.info.boardrider.boardNewsFragment;
+import goodline.info.util.ImageGalleryUtil;
+
+public class ActivityImageGallery extends AppCompatActivity {
+
+    private ImageGalleryUtil utils;
+    private FullScreenImageAdapter adapter;
+    private ViewPager viewPager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_gallery);
-    }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_image_gall, menu);
-        return true;
-    }
+        viewPager = (ViewPager) findViewById(R.id.pgrImgGal);
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+        utils = new ImageGalleryUtil(getApplicationContext());
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
+        Intent i = getIntent();
+        int position = i.getIntExtra(boardNewsFragment.IMAGE_POSITION, 0);
+        ArrayList<String> imageLinksList = i.getStringArrayListExtra(boardNewsFragment.IMAGE_LINKS_LIST_ENTRY);
 
-        return super.onOptionsItemSelected(item);
+        adapter = new FullScreenImageAdapter(ActivityImageGallery.this,
+                imageLinksList);
+
+        viewPager.setAdapter(adapter);
+
+        // displaying selected image first
+        viewPager.setCurrentItem(position);
     }
 }

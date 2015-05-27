@@ -136,12 +136,6 @@ public class BoardRiderFragment extends Fragment implements ListView.OnItemClick
     private void update() {
         mNewsLoader.setAdapter(mAdapter);
         mNewsLoader.updateAllDB();
-        /* if(!isUpdated && mNewsLoader.getErrorCode()== NewsLoader.INTERNET_CONNECTION_ERROR){
-            Toast.makeText(getActivity(), R.string.error_load_data, Toast.LENGTH_SHORT).show();
-        }else{
-            Toast.makeText(getActivity(), R.string.refresh_finished, Toast.LENGTH_SHORT).show();
-            mAdapter.prependNewsList(mNewsLoader.getData());
-        }*/
     }
     private void fetch(int startpage, boolean isScrollNeeded, boolean isNextPageNeeded){
 

@@ -38,6 +38,9 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 
+import java.util.ArrayList;
+
+import goodline.info.imagegallery.ActivityImageGallery;
 import goodline.info.sqllite.SugarORM;
 import valleyapp.VolleyApplication;
 
@@ -45,7 +48,9 @@ import valleyapp.VolleyApplication;
 public class boardNewsFragment extends Fragment implements TextView.OnClickListener {
 
     public static final String BOARD_NEWS_ENTRY = "boardNewsFragment.BOARD_NEWS_ENTRY";
-    private static final String TAG= "boardNewsFragment";
+
+    private static final String TAG = boardNewsFragment.class.getSimpleName();
+    private final ArrayList<String> mLinks=new ArrayList<>();
     private ScrollView mScrollView;
     private ImageView mTitleImageView;
     private TextView mTitleView;
@@ -54,6 +59,10 @@ public class boardNewsFragment extends Fragment implements TextView.OnClickListe
     private TextView mLinkToSiteView;
     private BoardNews mBoardNews;
 
+
+    public static final String IMAGE_POSITION = "boardNewsFragment.IMAGE_POSITION";
+    public static final String IMAGE_LINKS_LIST_ENTRY = "boardNewsFragment.IMAGE_LINKS_LIST_ENTRY";
+    PicassoImageGetter mPicassoImageGetter;
 
     public static boardNewsFragment newInstance(BoardNews boardNews) {
         Bundle args = new Bundle();
@@ -91,11 +100,27 @@ public class boardNewsFragment extends Fragment implements TextView.OnClickListe
                     .into(mTitleImageView);
         }
 
-
         mLinkToSiteView.setOnClickListener(this);
+
+        mPicassoImageGetter = new PicassoImageGetter(
+                mArticleView,
+                Resources.getSystem(),
+                Picasso.with(getActivity())
+        );
 
         getActivity().setTitle(mBoardNews.getTitle());
         fetchArticle();
+        mArticleView.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent i = new Intent(getActivity(), ActivityImageGallery.class);
+                        i.putExtra(IMAGE_POSITION, 0);
+                        i.putExtra(IMAGE_LINKS_LIST_ENTRY,mLinks);
+                        startActivity(i);
+                    }
+                }
+        );
     }
 
     @Override
@@ -127,13 +152,8 @@ public class boardNewsFragment extends Fragment implements TextView.OnClickListe
             VolleyApplication.getInstance().getRequestQueue().add(stringRequest);
 
         }else if(mBoardNews.getArticleContent().length()>0){
-
             mArticleView.setText(Html.fromHtml(mBoardNews.getArticleContent(),
-                    new PicassoImageGetter(
-                            mArticleView,
-                            Resources.getSystem(),
-                            Picasso.with(getActivity())
-                    ), null));
+                    mPicassoImageGetter   , null));
         }
 
     }
@@ -198,6 +218,7 @@ public class boardNewsFragment extends Fragment implements TextView.OnClickListe
                 @Override
                 protected Bitmap doInBackground(final Void... meh) {
                     try {
+                        mLinks.add(source);
                         return pablo.load(source).resize(300,300).onlyScaleDown().centerCrop().get();
                     } catch (Exception e) {
                         return null;
@@ -224,6 +245,7 @@ public class boardNewsFragment extends Fragment implements TextView.OnClickListe
 
             return result;
         }
+
 
         class BitmapDrawablePlaceHolder extends BitmapDrawable {
 
