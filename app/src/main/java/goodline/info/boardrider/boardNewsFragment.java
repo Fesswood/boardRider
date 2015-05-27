@@ -18,6 +18,8 @@ import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.text.Html;
+import android.text.Layout;
+import android.text.Spannable;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ImageSpan;
 import android.text.style.URLSpan;
@@ -26,6 +28,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -45,6 +48,7 @@ import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 
+import goodline.info.Listener.LinkAndImageLister;
 import goodline.info.Listener.LinkMovementMethodExt;
 import goodline.info.imagegallery.ActivityImageGallery;
 import goodline.info.sqllite.SugarORM;
@@ -191,11 +195,15 @@ public class boardNewsFragment extends Fragment implements TextView.OnClickListe
 
     private void attachTouchListener() {
 
-        mLinkMovementMethodExt = new LinkMovementMethodExt(mOnObjectClickHandler);
+       /* mLinkMovementMethodExt = new LinkMovementMethodExt(mOnObjectClickHandler);
         ((LinkMovementMethodExt) mLinkMovementMethodExt).addClass(ImageSpan.class);
         ((LinkMovementMethodExt) mLinkMovementMethodExt).addClass(URLSpan.class);
         mArticleView.setMovementMethod(mLinkMovementMethodExt);
-        Log.d(TAG, "attachTouchListener " + this.mBoardNews.getTitle() + mLinkMovementMethodExt.toString());
+        Log.d(TAG, "attachTouchListener " + this.mBoardNews.getTitle() + mLinkMovementMethodExt.toString());*/
+        LinkAndImageLister linkAndImageLister = new LinkAndImageLister(mOnObjectClickHandler);
+        linkAndImageLister.addClass(ImageSpan.class);
+        linkAndImageLister.addClass(URLSpan.class);
+        mArticleView.setOnTouchListener(linkAndImageLister);
     }
 
     private void fetchArticle(){
@@ -288,7 +296,7 @@ public class boardNewsFragment extends Fragment implements TextView.OnClickListe
     @Override
     public void onDetach() {
         super.onDetach();
-        Log.d(TAG, "onDetach " + this.mBoardNews.getTitle() + mLinkMovementMethodExt.toString());
+//        Log.d(TAG, "onDetach " + this.mBoardNews.getTitle() + mLinkMovementMethodExt.toString());
         mOnObjectClickHandler=null;
         mPicassoImageGetter=null;
     }
