@@ -1,6 +1,7 @@
 package goodline.info.imagegallery;
 
 import android.content.Intent;
+import android.content.res.Resources;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -32,9 +33,9 @@ public class ActivityImageGallery extends AppCompatActivity {
         Intent i = getIntent();
         int position = i.getIntExtra(boardNewsFragment.IMAGE_POSITION, 0);
         ArrayList<String> imageLinksList = i.getStringArrayListExtra(boardNewsFragment.IMAGE_LINKS_LIST_ENTRY);
-
+        Resources resources = getResources();
         adapter = new FullScreenImageAdapter(ActivityImageGallery.this,
-                imageLinksList);
+                imageLinksList,resources);
 
         viewPager.setAdapter(adapter);
 

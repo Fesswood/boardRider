@@ -4,11 +4,12 @@
     android:layout_height="match_parent"
     android:background="@color/primary_dark_material_dark">
 
-    <ImageView
+    <goodline.info.imagegallery.TouchImageView
         android:id="@+id/imgDispImgGal"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:scaleType="fitCenter" />
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitCenter"
+        android:background="@color/primary_dark_material_dark" />
 
 
 

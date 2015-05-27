@@ -1,5 +1,8 @@
 package goodline.info.imagegallery;
 
+import android.content.res.Resources;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.widget.ImageView;
 
 
@@ -20,6 +23,7 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
 import goodline.info.boardrider.R;
 
@@ -28,15 +32,16 @@ import goodline.info.boardrider.R;
  */
 public class FullScreenImageAdapter extends PagerAdapter {
 
+    private final Resources resources;
     private Activity _activity;
     private ArrayList<String> mImageLinks;
     private LayoutInflater inflater;
+    private Target target;
 
-    // constructor
-    public FullScreenImageAdapter(Activity activity,
-                                  ArrayList<String> imageLinks) {
-        this._activity = activity;
-        this.mImageLinks = imageLinks;
+    public FullScreenImageAdapter(ActivityImageGallery activityImageGallery, ArrayList<String> imageLinksList, Resources resources) {
+        this._activity = activityImageGallery;
+        this.mImageLinks = imageLinksList;
+        this.resources = resources;
     }
 
     @Override
@@ -51,7 +56,7 @@ public class FullScreenImageAdapter extends PagerAdapter {
 
     @Override
     public Object instantiateItem(ViewGroup container, int position) {
-        ImageView imgDisplay;
+        final TouchImageView imgDisplay;
         Button btnClose;
 
         inflater = (LayoutInflater) _activity
@@ -59,24 +64,29 @@ public class FullScreenImageAdapter extends PagerAdapter {
         View viewLayout = inflater.inflate(R.layout.image_gallery_item, container,
                 false);
 
-        imgDisplay = (ImageView) viewLayout.findViewById(R.id.imgDispImgGal);
+        imgDisplay = (TouchImageView) viewLayout.findViewById(R.id.imgDispImgGal);
+
+      target  = new Target() {
+            @Override
+            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                Drawable d = new BitmapDrawable(resources, bitmap);
+                imgDisplay.setImageDrawable(d);
+            }
+
+          @Override
+          public void onBitmapFailed(Drawable errorDrawable) {
+
+          }
+
+          @Override
+          public void onPrepareLoad(Drawable placeHolderDrawable) {
 
 
+          }
+        };
         String currentImageLink = mImageLinks.get(position);
 
-        if(!currentImageLink.isEmpty()){
-            Picasso.with(_activity)
-                    .load(currentImageLink)
-                    .fit()
-                    .centerCrop()
-                    .into(imgDisplay);
-        }else{
-            Picasso.with(_activity)
-                    .load(R.drawable.transparent_bg)
-                    .fit()
-                    .centerCrop()
-                    .into(imgDisplay);
-        }
+        Picasso.with(_activity).load(currentImageLink).into(target);
 
         ((ViewPager) container).addView(viewLayout);
 
@@ -86,6 +96,7 @@ public class FullScreenImageAdapter extends PagerAdapter {
     @Override
     public void destroyItem(ViewGroup container, int position, Object object) {
         ((ViewPager) container).removeView((RelativeLayout) object);
-
+        Picasso.with(_activity).cancelRequest(target);
     }
+
 }
