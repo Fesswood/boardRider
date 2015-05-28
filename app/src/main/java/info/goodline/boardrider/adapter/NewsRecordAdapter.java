@@ -2,6 +2,7 @@ package info.goodline.boardrider.adapter;
 
 import android.content.Context;
 import android.content.res.Configuration;
+import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +10,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.nostra13.universalimageloader.core.ImageLoader;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -42,7 +44,7 @@ public class NewsRecordAdapter extends ArrayAdapter<BoardNews> {
     public View getView(int position, View convertView, ViewGroup parent) {
 
         BoardNews newsItem = mNewslist.get(position);
-        boolean isImageLinkempty=newsItem.getImageUrl().isEmpty();
+
         if(convertView == null) {
                 convertView = LayoutInflater.from(getContext()).inflate(R.layout.news_list_item, parent, false);
         }
@@ -51,13 +53,10 @@ public class NewsRecordAdapter extends ArrayAdapter<BoardNews> {
             ImageView imageView = (ImageView) convertView.findViewById(R.id.news_image);
 
             if(!newsItem.getImageUrl().isEmpty()){
-                Picasso.with(getContext())
-                        .load(newsItem.getImageUrl())
-                        .into(imageView);
+                ImageLoader.getInstance().displayImage(newsItem.getImageUrl(), imageView);
+
             }else{
-                Picasso.with(getContext())
-                        .load(R.drawable.image_polyfill)
-                        .into(imageView);
+                imageView.setImageResource(R.drawable.image_polyfill);
             }
 
         TextView titleView = (TextView) convertView.findViewById(R.id.news_title);

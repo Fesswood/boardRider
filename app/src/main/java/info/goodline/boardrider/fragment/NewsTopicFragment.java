@@ -36,7 +36,6 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
-import com.squareup.picasso.Picasso;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -51,7 +50,10 @@ import info.goodline.boardrider.data.BoardNews;
 import info.goodline.boardrider.listener.UniversalTouchListener;
 import info.goodline.boardrider.loader.NewsLoader;
 import info.goodline.boardrider.sqllite.SugarORM;
-import valleyapp.VolleyApplication;
+import valleyapp.BoardNewsApplication;
+
+import static valleyapp.BoardNewsApplication.loadImage;
+import static valleyapp.BoardNewsApplication.loadImageAsync;
 
 
 public class NewsTopicFragment extends Fragment implements TextView.OnClickListener {
@@ -70,8 +72,8 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
     private TextView mLinkToSiteView;
     private BoardNews mBoardNews;
 
-    PicassoImageGetter mPicassoImageGetter;
-    private Handler mOnObjectClickHandler;
+    NewsTopicImageGetter mPicassoImageGetter;
+    private Handler mOnSpanClickHandler;
     private final ArrayList<String> mImageUrlsLinks =new ArrayList<>();
 
     public static NewsTopicFragment newInstance(BoardNews boardNews) {
@@ -138,35 +140,23 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
         mLinkToSiteView = (TextView)  fragmentView.findViewById(R.id.link);
         mTitleView.setText(mBoardNews.getTitle());
 
-
-
         if(!mBoardNews.getImageUrl().isEmpty()){
-            Picasso.with(getActivity())
-                    .load(mBoardNews.getImageUrl())
-                    .fit()
-                    .centerCrop()
-                    .into(mTitleImageView);
+            loadImage(mBoardNews.getImageUrl(), mTitleImageView, true);
+
         }else{
-            Picasso.with(getActivity())
-                    .load(R.drawable.transparent_bg)
-                    .fit()
-                    .centerCrop()
-                    .into(mTitleImageView);
+            mTitleImageView.setImageResource(R.drawable.transparent_bg);
         }
 
         mLinkToSiteView.setOnClickListener(this);
 
-        mPicassoImageGetter = new PicassoImageGetter(
+        mPicassoImageGetter = new NewsTopicImageGetter(
                 mArticleView,
-                Resources.getSystem(),
-                Picasso.with(getActivity())
+                Resources.getSystem()
         );
 
         getActivity().setTitle(mBoardNews.getTitle());
-       // fetchArticle();
 
-        // событие при клике на ссылку или изображение в статье
-        mOnObjectClickHandler = new Handler()
+        mOnSpanClickHandler = new Handler()
         {
             public void handleMessage(Message msg)
             {
@@ -192,7 +182,7 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
     }
 
     private void attachTouchListener() {
-        UniversalTouchListener universalTouchListener = new UniversalTouchListener(mOnObjectClickHandler);
+        UniversalTouchListener universalTouchListener = new UniversalTouchListener(mOnSpanClickHandler);
         universalTouchListener.addClass(ImageSpan.class);
         universalTouchListener.addClass(URLSpan.class);
         mArticleView.setOnTouchListener(universalTouchListener);
@@ -219,7 +209,7 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
                     Log.e(TAG, "News Topic:"+mBoardNews.getTitle()+" : Error "+error.getMessage());
                 }
             });
-            VolleyApplication.getInstance().getRequestQueue().add(stringRequest);
+            BoardNewsApplication.getInstance().getRequestQueue().add(stringRequest);
 
         }else if(mBoardNews.getArticleContent().length()>0){
             mArticleView.setText(Html.fromHtml(mBoardNews.getArticleContent(),
@@ -241,10 +231,9 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
         Elements watchers =  doc.select(".topic-info-viewers");
         mWatchersView.setText(" " + watchers.text());
         mArticleView.setText(Html.fromHtml(articleHTML,
-                new PicassoImageGetter(
+                new NewsTopicImageGetter(
                         mArticleView,
-                        Resources.getSystem(),
-                        Picasso.with(getActivity())
+                        Resources.getSystem()
                 ), null));
         if(mBoardNews.getArticleContent().length()==0){
             mBoardNews.setArticleContent("" + articleHTML);
@@ -278,22 +267,19 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
     @Override
     public void onDetach() {
         super.onDetach();
-        mOnObjectClickHandler=null;
+        mOnSpanClickHandler =null;
         mPicassoImageGetter=null;
     }
 
-    public class PicassoImageGetter implements Html.ImageGetter {
+    public class NewsTopicImageGetter implements Html.ImageGetter {
 
         final Resources resources;
 
-        final Picasso pablo;
-
         final TextView textView;
 
-        public PicassoImageGetter(final TextView textView, final Resources resources, final Picasso pablo) {
+        public NewsTopicImageGetter(final TextView textView, final Resources resources) {
             this.textView = textView;
             this.resources = resources;
-            this.pablo = pablo;
         }
 
         @Override
@@ -306,7 +292,7 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
                 protected Bitmap doInBackground(final Void... meh) {
                     try {
                         mImageUrlsLinks.add(source);
-                        return pablo.load(source).resize(300,300).onlyScaleDown().centerCrop().get();
+                        return  loadImageAsync(source,true);
                     } catch (Exception e) {
                         Log.e(TAG, "doInBackground " + e.getMessage());
                         return null;

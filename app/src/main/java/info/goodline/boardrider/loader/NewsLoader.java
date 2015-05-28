@@ -27,7 +27,7 @@ import info.goodline.boardrider.adapter.NewsRecordAdapter;
 import goodline.info.boardrider.R;
 import info.goodline.boardrider.data.BoardNews;
 import info.goodline.boardrider.sqllite.SugarORM;
-import valleyapp.VolleyApplication;
+import valleyapp.BoardNewsApplication;
 
 /**
  * Created by Крабов on 11.05.2015.
@@ -144,7 +144,7 @@ public class NewsLoader {
                     Log.e(TAG,"error "+error.getMessage());
                 }
             });
-            VolleyApplication.getInstance().getRequestQueue().add(stringRequest);
+            BoardNewsApplication.getInstance().getRequestQueue().add(stringRequest);
     }
 
     public boolean fetchFromInternet(int startpage, boolean isNextPageNeeded) throws ExecutionException, InterruptedException {
@@ -153,7 +153,7 @@ public class NewsLoader {
             RequestFuture<String> future = RequestFuture.newFuture();
             stringRequest = new StringRequest(Request.Method.GET, mBoardUrl+i, future, future);
 
-            VolleyApplication.getInstance().getRequestQueue().add(stringRequest);
+            BoardNewsApplication.getInstance().getRequestQueue().add(stringRequest);
             String response = null;
 
             try {
@@ -215,7 +215,7 @@ public class NewsLoader {
                     Log.e(TAG,"error "+error.getMessage());
                 }
             });
-            VolleyApplication.getInstance().getRequestQueue().add(stringRequest);
+            BoardNewsApplication.getInstance().getRequestQueue().add(stringRequest);
         }
 
     }
@@ -226,7 +226,7 @@ public class NewsLoader {
         RequestFuture<String> future = RequestFuture.newFuture();
         stringRequest = new StringRequest(Request.Method.GET, mBoardUrl+1, future, future);
 
-        VolleyApplication.getInstance().getRequestQueue().add(stringRequest);
+        BoardNewsApplication.getInstance().getRequestQueue().add(stringRequest);
         String response = null;
 
         try {
