@@ -80,45 +80,6 @@ public class BoardNews extends SugarRecord<BoardNews> implements Comparable<Boar
         }
     }
 
-    public String getTitle() {
-        return mTitle;
-    }
-
-    public void setTitle(String title) {
-        mTitle = title;
-    }
-
-    public String getImageUrl() {
-        return mImageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        mImageUrl = imageUrl;
-    }
-
-    public String getArticleUrl() {
-        return mArticleUrl;
-    }
-
-    public void setArticleUrl(String articleUrl) {
-        mArticleUrl = articleUrl;
-    }
-
-    public String getStringDate() {
-        Date d= new Date(mTimeStamp);
-
-        return sJUD.format(d);
-    }
-
-    public void setStringDate(String stringDate) {
-        try {
-            this.mTimeStamp=sJUD.parse(stringDate).getTime();
-        } catch (ParseException e) {
-            e.printStackTrace();
-            mTimeStamp=0;
-        }
-    }
-
     @Override
     public int compareTo(BoardNews another) {
         int result=-1;
@@ -176,15 +137,8 @@ public class BoardNews extends SugarRecord<BoardNews> implements Comparable<Boar
         return mSmallDesc;
     }
 
-    public void setSmallDesc(String smallDesc) {
-        mSmallDesc = smallDesc;
-    }
-
     public long getTimeStamp() {
         return mTimeStamp;
-    }
-    public void setTimeStamp(long timeStamp) {
-        mTimeStamp = timeStamp;
     }
 
     public String getArticleContent() {
@@ -193,5 +147,44 @@ public class BoardNews extends SugarRecord<BoardNews> implements Comparable<Boar
 
     public void setArticleContent(String articleContent) {
         mArticleContent = articleContent;
+    }
+
+    public String getTitle() {
+        return mTitle;
+    }
+
+    public void setTitle(String title) {
+        mTitle = title;
+    }
+
+    public String getImageUrl() {
+        return mImageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        mImageUrl = imageUrl;
+    }
+
+    public String getArticleUrl() {
+        return mArticleUrl;
+    }
+
+    public void setArticleUrl(String articleUrl) {
+        mArticleUrl = articleUrl;
+    }
+
+    public String getStringDate() {
+        Date d= new Date(mTimeStamp);
+
+        return sJUD.format(d);
+    }
+
+    public void setStringDate(String stringDate) {
+        try {
+            this.mTimeStamp=sJUD.parse(stringDate).getTime();
+        } catch (ParseException e) {
+            e.printStackTrace();
+            mTimeStamp=0;
+        }
     }
 }
