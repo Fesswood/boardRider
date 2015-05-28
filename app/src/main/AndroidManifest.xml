@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="goodline.info.boardrider" >
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application
+        android:name="valleyapp.VolleyApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <permission
+            android:name="goodline.info.notification.Permissions.SEND_NOTIFICATIONS"
+            android:label="permission to send simple notifications"
+            android:permissionGroup="android.permission-group.PERSONAL_INFO"
+            android:protectionLevel="normal" />
+
+        <meta-data
+            android:name="DATABASE"
+            android:value="board_news_articleContent.db" />
+        <meta-data
+            android:name="VERSION"
+            android:value="2" />
+        <meta-data
+            android:name="QUERY_LOG"
+            android:value="true" />
+        <meta-data
+            android:name="DOMAIN_PACKAGE_NAME"
+            android:value="goodline.info.boardrider" />
+
+        <activity
+            android:name="info.goodline.boardrider.activity.NewsListActivity"
+            android:clearTaskOnLaunch="true"
+            android:label="@string/title_activity_board_rider"
+            android:launchMode="singleTop" >
+        </activity>
+        <activity
+            android:theme="@style/Theme.AppCompat.Light"
+            android:name="info.goodline.boardrider.activity.ViewPagerActivity"
+            android:label="@string/title_activity_view_pager"
+            android:parentActivityName="info.goodline.boardrider.activity.NewsListActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="info.goodline.boardrider.activity.NewsListActivity" />
+        </activity>
+        <activity
+            android:name="info.goodline.boardrider.activity.SplashScreenActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name="info.goodline.boardrider.servise.NotificationService"
+            android:exported="false" >
+        </service>
+
+
+
+        <activity
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen"
+            android:name="info.goodline.boardrider.activity.ImageGalleryActivity"
+            android:label="@string/title_activity_activity_image_gallery" >
+        </activity>
+    </application>
+
+</manifest>
