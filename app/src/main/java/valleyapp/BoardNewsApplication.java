@@ -44,10 +44,6 @@ public class BoardNewsApplication extends com.orm.SugarApp {
     }
 
     public static void initImageLoader(Context context) {
-        // This configuration tuning is custom. You can tune every option, you may tune some of them,
-        // or you can create default configuration by
-        //  ImageLoaderConfiguration.createDefault(this);
-        // method.
 
         DisplayImageOptions defaultOptions = new DisplayImageOptions.Builder()
                 .cacheOnDisc(true).cacheInMemory(true)
@@ -63,15 +59,11 @@ public class BoardNewsApplication extends com.orm.SugarApp {
         ImageLoader.getInstance().init(config);
     }
     public static void loadImage(String url, ImageView imageView) {
-        loadImage(url, imageView,false);
-    }
-    public static void loadImage(String url, ImageView imageView,boolean isFitNeeded)
-    {
         ImageLoader imageLoader = ImageLoader.getInstance();
-
         imageLoader.displayImage(url, imageView);
     }
-    public static Bitmap loadImageAsync(String url, boolean isFitNeeded)
+
+    public static Bitmap loadImageAsync(String url)
     {
         ImageLoader imageLoader = ImageLoader.getInstance();
         return  imageLoader.loadImageSync(url);

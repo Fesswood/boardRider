@@ -136,7 +136,7 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
         mTitleView.setText(mBoardNews.getTitle());
 
         if(!mBoardNews.getImageUrl().isEmpty()){
-            loadImage(mBoardNews.getImageUrl(), mTitleImageView, true);
+            loadImage(mBoardNews.getImageUrl(), mTitleImageView);
 
         }else{
             mTitleImageView.setImageResource(R.drawable.transparent_bg);
@@ -280,7 +280,7 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
                 protected Bitmap doInBackground(final Void... meh) {
                     try {
                         mImageUrlsLinks.add(source);
-                        return  loadImageAsync(source,true);
+                        return  loadImageAsync(source);
                     } catch (Exception e) {
                         Log.e(TAG, "doInBackground " + e.getMessage());
                         return null;
@@ -310,7 +310,10 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
             Point size = new Point();
             display.getSize(size);
             // delete padding from screen size
-            size.x=size.x - 60;
+            float scale = getResources().getDisplayMetrics().density;
+            int paddingDpAsPixels = (int) (40*scale + 0.5f);
+
+            size.x=size.x - paddingDpAsPixels;
             double ratio = ((float) size.x) / (float) drawable.getIntrinsicWidth();
             size.y = (int) (ratio * drawable.getIntrinsicHeight());
             return size;
