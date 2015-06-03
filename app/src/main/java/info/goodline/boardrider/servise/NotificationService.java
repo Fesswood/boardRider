@@ -23,13 +23,7 @@ import info.goodline.boardrider.activity.NewsListActivity;
 import info.goodline.boardrider.loader.NewsLoader;
 import goodline.info.boardrider.R;
 
-/**
- * An {@link IntentService} subclass for handling asynchronous task requests in
- * a service on a separate handler thread.
- * <p/>
- * TODO: Customize class - update intent actions, extra parameters and static
- * helper methods.
- */
+
 public class NotificationService extends IntentService {
     private BoardNews mNewsFromBD;
     private NewsLoader mDataLoader;

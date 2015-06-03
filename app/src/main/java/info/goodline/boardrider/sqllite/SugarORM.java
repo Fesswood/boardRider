@@ -8,9 +8,7 @@ import java.util.List;
 import info.goodline.boardrider.data.BoardNews;
 
 
-/**
- * Created by Балдин Сергей on 14.05.2015.
- */
+
 public class SugarORM {
 
    public static ArrayList<BoardNews> getNews() {

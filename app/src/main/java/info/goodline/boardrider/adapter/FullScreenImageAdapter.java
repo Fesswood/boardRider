@@ -25,9 +25,7 @@ import valleyapp.BoardNewsApplication;
 
 import static valleyapp.BoardNewsApplication.*;
 
-/**
- * Created by Балдин Сергей on 26.05.2015.
- */
+
 public class FullScreenImageAdapter extends PagerAdapter {
 
     private final Resources resources;

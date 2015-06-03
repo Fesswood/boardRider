@@ -4,9 +4,7 @@ import android.content.Context;
 
 import info.goodline.boardrider.adapter.NewsRecordAdapter;
 
-/**
- * Created by Балдин Сергей on 08.05.2015.
- */
+
 public class BoardNewsLab {
 
         private NewsRecordAdapter mNewsRecordAdapter;

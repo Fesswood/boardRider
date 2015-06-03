@@ -18,9 +18,7 @@ import java.util.ArrayList;
 import goodline.info.boardrider.R;
 import info.goodline.boardrider.data.BoardNews;
 
-/**
- * Created by Балдин Сергей on 06.05.2015.
- */
+
 public class NewsRecordAdapter extends ArrayAdapter<BoardNews> {
 
     private ArrayList<BoardNews> mNewslist;

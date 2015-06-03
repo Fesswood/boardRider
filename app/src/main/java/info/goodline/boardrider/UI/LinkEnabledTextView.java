@@ -1,8 +1,5 @@
 package info.goodline.boardrider.UI;
 
-/**
- * Created by Балдин Сергей on 08.05.2015.
- */
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

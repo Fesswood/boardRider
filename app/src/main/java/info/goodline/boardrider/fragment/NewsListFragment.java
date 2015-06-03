@@ -36,19 +36,14 @@ import info.goodline.boardrider.data.BoardNewsLab;
 import info.goodline.boardrider.servise.NotificationService;
 
 
-/**
- * A placeholder fragment containing a simple view.
- */
+
 public class NewsListFragment extends Fragment implements ListView.OnItemClickListener {
 
     public static final String TAG= "NewsListFragment";
     public static final String PAGE_INDEX = "goodline.info.boardrider.index";
     public static final String SELECTED_NEWS = "goodline.info.boardrider.selected_news";
-    public static final String NEWS_TO_COMPARE = "goodline.info.boardrider.service_standard";
 
     public static final String PREFS_NAME = "MyPrefsFile";
-    private static final int GET_NEWS_FROM_SPLASH = 0;
-    private static final int GET_NEWS_FROM_NOTI = 1;
     private boolean afterOnCreate= false;
     private boolean mPrefsisNotificationEnabled = true;
 

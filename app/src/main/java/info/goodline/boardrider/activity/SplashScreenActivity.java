@@ -132,12 +132,6 @@ public class SplashScreenActivity extends AppCompatActivity implements
         }
 
 
-
-        /**
-         * This is where the bulk of our work is done.  This function is
-         * called in a background thread and should generate a new set of
-         * data to be published by the loader.
-         */
         @Override public ArrayList<BoardNews> loadInBackground() {
 
             final Context context = getContext();
@@ -169,11 +163,6 @@ public class SplashScreenActivity extends AppCompatActivity implements
 
         }
 
-        /**
-         * Called when there is new data to deliver to the client.  The
-         * super class will take care of delivering it; the implementation
-         * here just adds a little more logic.
-         */
         @Override public void deliverResult(ArrayList<BoardNews> boardNews) {
             if (isReset()) {
                 // An async query came in while the loader is stopped.  We

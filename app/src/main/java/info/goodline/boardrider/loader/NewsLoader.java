@@ -29,9 +29,7 @@ import info.goodline.boardrider.data.BoardNews;
 import info.goodline.boardrider.sqllite.SugarORM;
 import valleyapp.BoardNewsApplication;
 
-/**
- * Created by Крабов on 11.05.2015.
- */
+
 public class NewsLoader {
 
 

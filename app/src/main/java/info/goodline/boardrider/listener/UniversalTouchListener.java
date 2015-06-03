@@ -15,9 +15,7 @@ import java.util.List;
 
 import info.goodline.boardrider.fragment.NewsTopicFragment;
 
-/**
- * Created by Балдин Сергей on 27.05.2015.
- */
+
 public class UniversalTouchListener implements View.OnTouchListener{
 
     private static final String TAG = UniversalTouchListener.class.getSimpleName();
