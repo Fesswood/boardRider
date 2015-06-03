@@ -1,7 +1,8 @@
-package goodline.info.boardrider;
+package info.goodline.boardrider.adapter;
 
 import android.content.Context;
 import android.content.res.Configuration;
+import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,15 +10,15 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.nostra13.universalimageloader.core.ImageLoader;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
-/**
- * Created by Балдин Сергей on 06.05.2015.
- */
+import goodline.info.boardrider.R;
+import info.goodline.boardrider.data.BoardNews;
+
+
 public class NewsRecordAdapter extends ArrayAdapter<BoardNews> {
 
     private ArrayList<BoardNews> mNewslist;
@@ -29,34 +30,42 @@ public class NewsRecordAdapter extends ArrayAdapter<BoardNews> {
     }
 
     public void addNewslist(ArrayList<BoardNews> parsedNewsList) {
+        parsedNewsList.removeAll(mNewslist);
         mNewslist.addAll(parsedNewsList);
         notifyDataSetChanged();
     }
-    public List<BoardNews> getNewsList() {
+    public ArrayList<BoardNews> getNewsList() {
        return mNewslist;
     }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+
+        BoardNews newsItem = mNewslist.get(position);
+
         if(convertView == null) {
-            convertView = LayoutInflater.from(getContext()).inflate(R.layout.news_list_item, parent, false);
+                convertView = LayoutInflater.from(getContext()).inflate(R.layout.news_list_item, parent, false);
         }
 
-       ImageView imageView = (ImageView) convertView.findViewById(R.id.news_image);
+
+            ImageView imageView = (ImageView) convertView.findViewById(R.id.news_image);
+
+            if(!newsItem.getImageUrl().isEmpty()){
+                ImageLoader.getInstance().displayImage(newsItem.getImageUrl(), imageView);
+
+            }else{
+                imageView.setImageResource(R.drawable.image_polyfill);
+            }
+
         TextView titleView = (TextView) convertView.findViewById(R.id.news_title);
         TextView dateView = (TextView) convertView.findViewById(R.id.news_date);
 
-        BoardNews newsItem = mNewslist.get(position);
-        Picasso.with(getContext())
-                .load(newsItem.getImageUrl())
-                .into(imageView);
         titleView.setText(newsItem.getTitle());
         dateView.setText(newsItem.getStringDate());
 
-        if(mContext.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
+        if(mContext.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE ){
             TextView descView = (TextView) convertView.findViewById(R.id.news_desc);
             descView.setText(newsItem.getSmallDesc());
-
         }
 
         return convertView;

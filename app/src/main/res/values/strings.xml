@@ -1,6 +1,5 @@
 <resources>
-    <string name="app_name">BoardRider</string>
-    <string name="hello_world">Hello world!</string>
+    <string name="app_name">Новости</string>
     <string name="action_settings">Settings</string>
     <string name="empty">Извините! В данный момент показывать нечего.</string>
     <string name="title_activity_board_rider">BoardRider</string>
@@ -8,4 +7,24 @@
     <string name="refresh_finished">Загрузка завершена</string>
     <string name="error_load_data">Загрузка данных завершилась с ошибкой. Попробуйте еще раз.</string>
     <string name="title_activity_board_news">boardNewsActivity</string>
+    <string name="link_article">ОТКРЫТЬ НА САЙТЕ</string>
+    <string name="title_activity_view_pager">ViewPagerActivity</string>
+
+    <string name="title_activity_splash_creen">SplashCreenActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="action_to_top">Пролистать Наверх</string>
+    <string name="action_to_bottom">Пролистать Вниз</string>
+    <string name="no_connection">Увы, но мы не можем загрузить новости без интернета.</string>
+    <string name="no_connection_title">Включить Интернет</string>
+    <string name="settings_button_text">включить</string>
+    <string name="cancel_button_text">Работать оффлайн</string>
+    <string name="clear_cache">Удалить кеш новостей</string>
+    <string name="checkable">Слать Уведомления</string>
+    <string name="refresh_finished_for_page">Обновили список новостей со страницы:</string>
+    <string name="refresh_finished_for_all_pages">Обновление завершены</string>
+    <string name="no_fresh_news">Новых новостей не поступало</string>
+    <string name="title_activity_activity_image_gallery">Галерея</string>
+
+    <string name="hello_world">Hello world!</string>
 </resources>

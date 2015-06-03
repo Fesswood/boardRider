@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="goodline.info.boardrider.BoardRiderFragment">
+    tools:context="info.goodline.boardrider.fragment.NewsListFragment">
     <com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout
         android:id="@+id/refresh"
         android:layout_width="match_parent"

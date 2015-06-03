@@ -1,7 +1,21 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="goodline.info.boardrider.BoardRiderActivity">
-    <item android:id="@+id/action_settings" android:title="@string/action_settings"
-        android:orderInCategory="100" app:showAsAction="never" />
+    tools:context="info.goodline.boardrider.activity.NewsListActivity">
+    <item android:id="@+id/action_to_top"
+          android:title="@string/action_to_top"
+          android:orderInCategory="100"
+          app:showAsAction="never"/>
+    <item android:id="@+id/action_to_bottom"
+          android:title="@string/action_to_bottom"
+          android:orderInCategory="100"
+          app:showAsAction="never"/>
+    <item android:id="@+id/clear_cache"
+          android:title="@string/clear_cache"
+          android:orderInCategory="100"
+          app:showAsAction="never"/>
+    <item
+        android:id="@+id/notification_state"
+        android:checkable="true"
+        android:title="@string/checkable" />
 </menu>

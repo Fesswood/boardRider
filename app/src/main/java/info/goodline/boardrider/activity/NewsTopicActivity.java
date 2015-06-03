@@ -1,12 +1,14 @@
-package goodline.info.boardrider;
+package info.goodline.boardrider.activity;
 
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import goodline.info.boardrider.R;
 
-public class boardNewsActivity extends ActionBarActivity {
+
+public class NewsTopicActivity extends ActionBarActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
