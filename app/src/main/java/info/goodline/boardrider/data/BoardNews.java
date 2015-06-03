@@ -7,6 +7,7 @@ import android.os.Parcelable;
 import com.orm.SugarRecord;
 import com.orm.dsl.Ignore;
 
+import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.DateFormatSymbols;
 import java.text.ParseException;
@@ -18,7 +19,7 @@ import java.util.Locale;
  * Created by Балдин Сергей on 06.05.2015.
  */
 
-public class BoardNews extends SugarRecord<BoardNews> implements Comparable<BoardNews>, Parcelable {
+public class BoardNews extends SugarRecord<BoardNews> implements Comparable<BoardNews>, Serializable {
   private  String mTitle;
   private  String mSmallDesc;
   private  String mImageUrl;
@@ -105,34 +106,6 @@ public class BoardNews extends SugarRecord<BoardNews> implements Comparable<Boar
             return false;
         return true;
     }
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(mTitle);
-        dest.writeString(mSmallDesc);
-        dest.writeString(mImageUrl);
-        dest.writeString(mArticleUrl);
-        dest.writeLong(mTimeStamp);
-        dest.writeString(mArticleContent);
-    }
-    // this is used to regenerate your object. All Parcelables must have a CREATOR that implements these two methods
-    public static final Creator<BoardNews> CREATOR = new Creator<BoardNews>() {
-
-        public BoardNews createFromParcel(Parcel in) {
-         BoardNews createdParcel = new BoardNews(in.readString(), in.readString(), in.readString(),in.readString(),in.readLong());
-            createdParcel.setArticleContent(in.readString());
-            return createdParcel;
-        }
-
-        public BoardNews[] newArray(int size) {
-            return new BoardNews[size];
-        }
-    };
-
     public String getSmallDesc() {
         return mSmallDesc;
     }

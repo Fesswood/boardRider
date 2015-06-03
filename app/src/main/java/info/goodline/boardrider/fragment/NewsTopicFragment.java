@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -21,6 +22,7 @@ import android.text.Html;
 import android.text.style.ImageSpan;
 import android.text.style.URLSpan;
 import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -78,7 +80,7 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
 
     public static NewsTopicFragment newInstance(BoardNews boardNews) {
         Bundle args = new Bundle();
-        args.putParcelable(BOARD_NEWS_ENTRY, boardNews);
+        args.putSerializable(BOARD_NEWS_ENTRY, boardNews);
 
         NewsTopicFragment fragment = new NewsTopicFragment();
         fragment.setArguments(args);
@@ -95,13 +97,6 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
 
 
 
-    }
-
-
-    private boolean onUrlClick(String url)
-    {
-        Log.d(TAG, "onUrlClick url = " + url);
-        return false;
     }
 
     private boolean onImageClick(String imageSourceUrl)
@@ -131,7 +126,7 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
                              Bundle savedInstanceState) {
         View fragmentView= inflater.inflate(R.layout.fragment_board_news, container, false);
         setHasOptionsMenu(true);
-        mBoardNews      =  getArguments().getParcelable(BOARD_NEWS_ENTRY);
+        mBoardNews      = (BoardNews) getArguments().getSerializable(BOARD_NEWS_ENTRY);
         mScrollView     = (ScrollView)fragmentView.findViewById(R.id.scroll_view);
         mTitleImageView = (ImageView) fragmentView.findViewById(R.id.title_image);
         mTitleView      = (TextView)  fragmentView.findViewById(R.id.title_view);
@@ -163,10 +158,6 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
                 if (msg.what == IMAGE_CLICK)
                 {
                     Object span = msg.obj;
-                    if (span instanceof URLSpan)
-                    {
-                        onUrlClick(((URLSpan) span).getURL());
-                    }
                     if (span instanceof ImageSpan)
                     {
                         onImageClick(((ImageSpan) span).getSource());
@@ -246,9 +237,6 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mBoardNews      =  getArguments().getParcelable(BOARD_NEWS_ENTRY);
-
-        Log.d(TAG, "onCreate " + this.mBoardNews.getTitle());
     }
 
     @Override
@@ -303,21 +291,29 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
                 protected void onPostExecute(final Bitmap bitmap) {
                     try {
                         final BitmapDrawable drawable = new BitmapDrawable(resources, bitmap);
-
-                        drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
-
+                        Point size = getRelativeImageSize(drawable);
+                        drawable.setBounds(0, 0, size.x, size.y);
                         result.setDrawable(drawable);
-                        result.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
-
-                        textView.setText(textView.getText()); // invalidate() doesn't work correctly...
+                        result.setBounds(0, 0, size.x, size.y);
+                        textView.setText(textView.getText());
                     } catch (Exception e) {
                         Log.e(TAG, "onPostExecute " + e.getMessage());
                     }
                 }
 
             }.execute((Void) null);
-
             return result;
+        }
+
+        private Point getRelativeImageSize(BitmapDrawable drawable) {
+            Display display = getActivity().getWindowManager().getDefaultDisplay();
+            Point size = new Point();
+            display.getSize(size);
+            // delete padding from screen size
+            size.x=size.x - 60;
+            double ratio = ((float) size.x) / (float) drawable.getIntrinsicWidth();
+            size.y = (int) (ratio * drawable.getIntrinsicHeight());
+            return size;
         }
 
 

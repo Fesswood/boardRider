@@ -108,7 +108,7 @@ public class NewsListFragment extends Fragment implements ListView.OnItemClickLi
 
         mAdapter =  BoardNewsLab.get(getActivity()).getNewsRecordAdapter();
 
-        checkExtras(getActivity().getIntent(),GET_NEWS_FROM_SPLASH);
+        checkExtras();
         if(mPrefsisNotificationEnabled){
             startService();
         }
@@ -117,12 +117,12 @@ public class NewsListFragment extends Fragment implements ListView.OnItemClickLi
         mListView.setOnItemClickListener(this);
     }
 
-    private void checkExtras(Intent intent, int flag) {
+    private void checkExtras() {
         Intent intent1 = ((NewsListActivity) getActivity()).popLastIntent();
         Bundle extras =intent1.getExtras();
         if (extras != null) {
             if (intent1.getAction().equals(SplashScreenActivity.SPLASH_HAS_NEWS)) {
-                ArrayList<BoardNews> loadedNews = extras.getParcelableArrayList(SplashScreenActivity.NEWS_LIST);
+                ArrayList<BoardNews> loadedNews =(ArrayList<BoardNews>) extras.getSerializable(SplashScreenActivity.NEWS_LIST);
                 if (loadedNews != null) {
                     mAdapter.addNewslist(loadedNews);
                 } else {
@@ -130,7 +130,7 @@ public class NewsListFragment extends Fragment implements ListView.OnItemClickLi
                 }
             }else if(intent1.getAction().equals(NotificationService.NOTI_HAS_NEWS)){
                 Bundle oldBundle = intent1.getBundleExtra(BoardNews.PACKAGE_CLASS);
-                BoardNews notiNews = (BoardNews) oldBundle.getParcelable(BoardNews.PACKAGE_CLASS);
+                BoardNews notiNews = (BoardNews) oldBundle.getSerializable(BoardNews.PACKAGE_CLASS);
                 if (notiNews !=null){
                     if(mAdapter.getNewsList().get(0).compareTo(notiNews)==1){
                         mAdapter.getNewsList().add(0, notiNews);
@@ -199,7 +199,7 @@ public class NewsListFragment extends Fragment implements ListView.OnItemClickLi
     public void onResume() {
         super.onResume();
         if(afterOnCreate){
-            checkExtras(getActivity().getIntent(), GET_NEWS_FROM_NOTI);
+            checkExtras();
         }
         afterOnCreate=true;
     }
@@ -270,10 +270,6 @@ public class NewsListFragment extends Fragment implements ListView.OnItemClickLi
     private void startService() {
         Intent serviceIntent = new Intent(getActivity(),
                NotificationService.class);
-
-        BoardNews newsToCompare = mAdapter.getNewsList().get(0);
-
-        serviceIntent.putExtra(NEWS_TO_COMPARE, newsToCompare);
 
         Context context = getActivity();
 

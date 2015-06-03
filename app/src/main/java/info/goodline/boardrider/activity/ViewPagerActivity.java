@@ -52,7 +52,7 @@ public class ViewPagerActivity extends FragmentActivity {
             }
         });
 
-        BoardNews boardNews = getIntent().getParcelableExtra(NewsListFragment.SELECTED_NEWS);
+        BoardNews boardNews =(BoardNews) getIntent().getSerializableExtra(NewsListFragment.SELECTED_NEWS);
         for (int i = 0; i < mNewsList.size(); i++) {
             if (mNewsList.get(i).equals(boardNews)) {
                 mViewPager.setCurrentItem(i);

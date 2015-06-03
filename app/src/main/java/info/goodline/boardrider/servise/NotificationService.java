@@ -45,18 +45,26 @@ public class NotificationService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        mDataLoader=new NewsLoader("http://live.goodline.info/guest/page",getApplicationContext());
-        mNewsFromBD = intent.getParcelableExtra(NewsListFragment.NEWS_TO_COMPARE);
-
         try {
-            boolean isFetchingResultSucces = mDataLoader.fetchLastNews();
-            if(isFetchingResultSucces){
-                BoardNews reseivedNews = mDataLoader.getData().get(0);
-                int isFetchingNewsLater = mNewsFromBD.compareTo(reseivedNews);
-                isFetchingNewsLater=1;
-                if(isFetchingNewsLater==1){
-                    Log.d(DEBUG_TAG, "News received!");
-                    sendNotif(reseivedNews);
+            mDataLoader=new NewsLoader("http://live.goodline.info/guest/page",getApplicationContext());
+            mDataLoader.fetchNewsOffline();
+            boolean isFetchingResultSucces;
+                if(mDataLoader.getData().size()>0){
+                    mNewsFromBD = mDataLoader.getData().get(0);
+                    isFetchingResultSucces = mDataLoader.fetchLastNews();
+                    if(isFetchingResultSucces){
+                        BoardNews reseivedNews = mDataLoader.getData().get(0);
+                        int isFetchingNewsLater = mNewsFromBD.compareTo(reseivedNews);
+                        if(isFetchingNewsLater==1){
+                            Log.d(DEBUG_TAG, "News received!");
+                            sendNotif(reseivedNews);
+                    }
+                }else if(NewsLoader.isOnline(getApplicationContext())){
+                    isFetchingResultSucces = mDataLoader.fetchLastNews();
+                    if(isFetchingResultSucces){
+                        Log.d(DEBUG_TAG, "News received!");
+                        sendNotif(mDataLoader.getData().get(0));
+                    }
                 }
             }
         } catch (ExecutionException e) {
@@ -71,7 +79,7 @@ public class NotificationService extends IntentService {
 
 
         Bundle bundle = new Bundle();
-        bundle.putParcelable(BoardNews.PACKAGE_CLASS, receiveNews);
+        bundle.putSerializable(BoardNews.PACKAGE_CLASS, receiveNews);
 
 
 

@@ -17,6 +17,7 @@
                     android:id="@+id/title_image"
                     android:layout_width="match_parent"
                     android:layout_height="240dp"
+                    android:scaleType="centerCrop"
                     android:adjustViewBounds="true"
                     android:background="@color/accent_material_dark"/>
                 <RelativeLayout
