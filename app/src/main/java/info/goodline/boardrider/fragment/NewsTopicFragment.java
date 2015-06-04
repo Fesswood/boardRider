@@ -54,10 +54,16 @@ import info.goodline.boardrider.loader.NewsLoader;
 import info.goodline.boardrider.sqllite.SugarORM;
 import valleyapp.BoardNewsApplication;
 
+import static valleyapp.BoardNewsApplication.isOnline;
 import static valleyapp.BoardNewsApplication.loadImage;
 import static valleyapp.BoardNewsApplication.loadImageAsync;
+import static valleyapp.BoardNewsApplication.showNoConnectionDialog;
 
-
+/**
+ *  NewsTopicFragment show selected news and news before/after selected  into ViewPager
+ *  @see info.goodline.boardrider.activity.ViewPagerActivity
+ *  @author  Sergey Baldin
+ */
 public class NewsTopicFragment extends Fragment implements TextView.OnClickListener {
 
     public static final String IMAGE_POSITION = "NewsTopicFragment.IMAGE_POSITION";
@@ -72,16 +78,23 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
     private TextView mArticleView;
     private TextView mWatchersView;
     private TextView mLinkToSiteView;
-    private BoardNews mBoardNews;
 
-    NewsTopicImageGetter mPicassoImageGetter;
+    private BoardNews mBoardNews;
+    /**
+     *  Handler for catching onImageClick and showing fullscreen gallery
+     */
     private Handler mOnSpanClickHandler;
     private final ArrayList<String> mImageUrlsLinks =new ArrayList<>();
+    private NewsTopicImageGetter mNewsTopicImageGetter;
 
+    /**
+     * Create new instance of NewsTopicFragment
+     * @param boardNews news for displaying in tne fragment
+     * @return instance of NewsTopicFragment
+     */
     public static NewsTopicFragment newInstance(BoardNews boardNews) {
         Bundle args = new Bundle();
         args.putSerializable(BOARD_NEWS_ENTRY, boardNews);
-
         NewsTopicFragment fragment = new NewsTopicFragment();
         fragment.setArguments(args);
         Log.d(TAG,"newInstance "+boardNews.getTitle());
@@ -89,36 +102,20 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
     }
 
     public NewsTopicFragment() {
+        // empty constructor for newInstance
     }
 
     @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-
-
-    }
-
-    private boolean onImageClick(String imageSourceUrl)
-    {
-        for (int imageIndex = 0; imageIndex < mImageUrlsLinks.size(); imageIndex++)
-        {
-            if (mImageUrlsLinks.get(imageIndex).equals(imageSourceUrl))
-            {
-                // найден индекс изображения в массиве, передать в активити
-                showImageGallery(imageIndex, mImageUrlsLinks);
-                Log.d(TAG, "onImageClick imageIndex = " + imageIndex );
-                return true;
-            }
+        mNewsTopicImageGetter =  new NewsTopicImageGetter(
+                Resources.getSystem(),
+                getActivity().getWindowManager().getDefaultDisplay()
+        );
+        if (getArguments() != null) {
+            mBoardNews = (BoardNews) getArguments().getSerializable(BOARD_NEWS_ENTRY);
         }
-        return false;
-    }
-
-    private void showImageGallery(int imageIndex, ArrayList<String> mImageUrlsLinks) {
-        Intent i = new Intent(getActivity(), ImageGalleryActivity.class);
-        i.putExtra(IMAGE_POSITION, imageIndex);
-        i.putExtra(IMAGE_LINKS_LIST_ENTRY, mImageUrlsLinks);
-        startActivity(i);
     }
 
     @Override
@@ -126,31 +123,95 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
                              Bundle savedInstanceState) {
         View fragmentView= inflater.inflate(R.layout.fragment_board_news, container, false);
         setHasOptionsMenu(true);
-        mBoardNews      = (BoardNews) getArguments().getSerializable(BOARD_NEWS_ENTRY);
         mScrollView     = (ScrollView)fragmentView.findViewById(R.id.scroll_view);
         mTitleImageView = (ImageView) fragmentView.findViewById(R.id.title_image);
         mTitleView      = (TextView)  fragmentView.findViewById(R.id.title_view);
         mArticleView    = (TextView)  fragmentView.findViewById(R.id.article_content);
         mWatchersView   = (TextView)  fragmentView.findViewById(R.id.watchers_view);
         mLinkToSiteView = (TextView)  fragmentView.findViewById(R.id.link);
+        mLinkToSiteView.setOnClickListener(this);
         mTitleView.setText(mBoardNews.getTitle());
 
+        setTitleImage();
+        initializeHandler();
+        fetchArticle();
+        attachTouchListener();
+
+        return fragmentView;
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mOnSpanClickHandler = null;
+        mNewsTopicImageGetter = null;
+    }
+
+    @Override
+    public void onClick(View v) {
+        showBrowserForFullNews();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_board_rider, menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_to_top) {
+            mScrollView.fullScroll(View.FOCUS_DOWN);
+        }
+        if (id == R.id.action_to_bottom) {
+            mScrollView.fullScroll(View.FOCUS_UP);
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * check if input url image is contained in {@link #mImageUrlsLinks}
+     * @param imageSourceUrl url of clicked image
+     * @return true if mImageUrlsLinks contains url image and false otherwise
+     */
+   private boolean onImageClick(String imageSourceUrl){
+        for (int imageIndex = 0; imageIndex < mImageUrlsLinks.size(); imageIndex++){
+            if (mImageUrlsLinks.get(imageIndex).equals(imageSourceUrl)){
+                showImageGallery(imageIndex, mImageUrlsLinks);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Show image gallery starts with imageIndex
+     * @param imageIndex index of first image
+     * @param mImageUrlsLinks list of all urls
+     */
+    private void showImageGallery(int imageIndex, ArrayList<String> mImageUrlsLinks) {
+        Intent i = new Intent(getActivity(), ImageGalleryActivity.class);
+        i.putExtra(IMAGE_POSITION, imageIndex);
+        i.putExtra(IMAGE_LINKS_LIST_ENTRY, mImageUrlsLinks);
+        startActivity(i);
+    }
+    /**
+     *  Set image from url for title block of news or set transparent image
+     */
+    private void setTitleImage() {
         if(!mBoardNews.getImageUrl().isEmpty()){
             loadImage(mBoardNews.getImageUrl(), mTitleImageView);
 
         }else{
             mTitleImageView.setImageResource(R.drawable.transparent_bg);
         }
+    }
 
-        mLinkToSiteView.setOnClickListener(this);
-
-        mPicassoImageGetter = new NewsTopicImageGetter(
-                mArticleView,
-                Resources.getSystem()
-        );
-
-        getActivity().setTitle(mBoardNews.getTitle());
-
+    /**
+     *  initialize handle for handle click messages of span in TextView
+     */
+    private void initializeHandler() {
         mOnSpanClickHandler = new Handler()
         {
             public void handleMessage(Message msg)
@@ -165,13 +226,7 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
                 }
             }
         };
-
-        fetchArticle();
-        attachTouchListener();
-
-        return fragmentView;
     }
-
     private void attachTouchListener() {
         UniversalTouchListener universalTouchListener = new UniversalTouchListener(mOnSpanClickHandler);
         universalTouchListener.addClass(ImageSpan.class);
@@ -179,37 +234,58 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
         mArticleView.setOnTouchListener(universalTouchListener);
     }
 
+    /**
+     *   Fetch  content of news topic ({@link #mBoardNews})
+     *   if there are no internet and connection no content of news in database show smallDesc of news topic
+     *   if there is no only internet connection show content of news from database
+     *   if there is internet connection content will be fetched from url
+     */
     private void fetchArticle(){
         Context context=getActivity();
-        if(!NewsLoader.isOnline(context) && mBoardNews.getArticleContent().length()==0){
+        if(!isOnline(context) && mBoardNews.getArticleContent().length()==0){
+
             showNoConnectionDialog(context);
             mArticleView.setText(mBoardNews.getSmallDesc());
-        }else if(NewsLoader.isOnline(context)){
 
-            StringRequest stringRequest;
-            stringRequest = new StringRequest(Request.Method.GET, mBoardNews.getArticleUrl(),
-                    new Response.Listener<String>() {
-                        @Override
-                        public void onResponse(String response) {
-                            parseAndSetArticle(response);
-                        }
-                    }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    Toast.makeText(getActivity(), R.string.error_load_data, Toast.LENGTH_SHORT).show();
-                    Log.e(TAG, "News Topic:"+mBoardNews.getTitle()+" : Error "+error.getMessage());
-                }
-            });
-            BoardNewsApplication.getInstance().getRequestQueue().add(stringRequest);
+        }else if(isOnline(context)){
+
+            sendContentNewsRequest();
 
         }else if(mBoardNews.getArticleContent().length()>0){
-            mArticleView.setText(Html.fromHtml(mBoardNews.getArticleContent(),
-                    mPicassoImageGetter   , null));
 
+            mArticleView.setText(Html.fromHtml(mBoardNews.getArticleContent()
+                                               ,mNewsTopicImageGetter
+                                               ,null));
         }
 
     }
 
+    /**
+     *  Send StringRequest for getting content of news otherwise show toast with error message
+     */
+    private void sendContentNewsRequest() {
+        StringRequest stringRequest;
+        stringRequest = new StringRequest(Request.Method.GET, mBoardNews.getArticleUrl(),
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        parseAndSetArticle(response);
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast.makeText(getActivity(), R.string.error_load_data, Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "News Topic:" + mBoardNews.getTitle() + " : Error " + error.getMessage());
+            }
+        });
+        BoardNewsApplication.getInstance().getRequestQueue().add(stringRequest);
+    }
+
+    /**
+     * Parse html and set it to textView (@link #mArticleView) and count of viewer
+     * after that if news topic doesn't  contain content in database, save it to database
+     * @param HTML string with html content of news
+     */
     private void parseAndSetArticle(String HTML){
          Document doc =null;
         try {
@@ -221,53 +297,57 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
         String articleHTML=article.html();
         Elements watchers =  doc.select(".topic-info-viewers");
         mWatchersView.setText(" " + watchers.text());
-        mArticleView.setText(Html.fromHtml(articleHTML,
-                new NewsTopicImageGetter(
-                        mArticleView,
-                        Resources.getSystem()
-                ), null));
+        mArticleView.setText(Html.fromHtml(articleHTML, mNewsTopicImageGetter, null));
         if(mBoardNews.getArticleContent().length()==0){
             mBoardNews.setArticleContent("" + articleHTML);
-
-            new SaveOperation().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,null);
+            new SaveOperation().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, null);
         }
     }
 
+   /**
+    *  if user clicked to link_article show browser with full news
+    */
+   private void showBrowserForFullNews() {
+       Intent i = new Intent(Intent.ACTION_VIEW);
+       i.setData(Uri.parse(mBoardNews.getArticleUrl()));
+       startActivity(i);
+   }
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
+   private class SaveOperation extends AsyncTask<Void, Void, Void> {
+          @Override
+       protected Void doInBackground(Void... params) {
+           SugarORM.updateNews(mBoardNews);
+         return null;
+       }
+          @Override
+       protected void onProgressUpdate(Void... values) {}
+   }
 
-    @Override
-    public void onClick(View v) {
-        Intent i = new Intent(Intent.ACTION_VIEW);
-        i.setData(Uri.parse(mBoardNews.getArticleUrl()));
-        startActivity(i);
-    }
-    @Override
-    public void onResume() {
-        super.onResume();
-       Log.d(TAG, "onResume " + this.mBoardNews.getTitle());
-        // fetchArticle();
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mOnSpanClickHandler =null;
-        mPicassoImageGetter=null;
-    }
-
+    /**
+     * ImageGetter for loading images in news topic
+     *
+     * NewsTopicImageGetter used for downloading images from news html to canvas of news TextView.
+     * @see info.goodline.boardrider.fragment.NewsTopicFragment
+     * Also while the AsyncTask working add every image url to ArrayList for subsequent creating fullscreen gallery.
+     * @see info.goodline.boardrider.activity.ImageGalleryActivity
+     * @author  Sergey Baldin
+     *
+     */
     public class NewsTopicImageGetter implements Html.ImageGetter {
 
-        final Resources resources;
 
-        final TextView textView;
+        private String DEBUG_TAG = NewsTopicImageGetter.class.getSimpleName();
+        private Display mDisplay;
+        private Resources mResources;
 
-        public NewsTopicImageGetter(final TextView textView, final Resources resources) {
-            this.textView = textView;
-            this.resources = resources;
+        /**
+         *  Create instance of NewsTopicImageGetter
+         * @param resources reference to app resources
+         * @param display  reference to display for getting size of screen
+         */
+        public NewsTopicImageGetter(final Resources resources,  Display display ) {
+            this.mResources = resources;
+            this.mDisplay = display;
         }
 
         @Override
@@ -282,7 +362,7 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
                         mImageUrlsLinks.add(source);
                         return  loadImageAsync(source);
                     } catch (Exception e) {
-                        Log.e(TAG, "doInBackground " + e.getMessage());
+                        Log.e(DEBUG_TAG, "doInBackground " + e.getMessage());
                         return null;
                     }
                 }
@@ -290,14 +370,14 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
                 @Override
                 protected void onPostExecute(final Bitmap bitmap) {
                     try {
-                        final BitmapDrawable drawable = new BitmapDrawable(resources, bitmap);
+                        final BitmapDrawable drawable = new BitmapDrawable(mResources, bitmap);
                         Point size = getRelativeImageSize(drawable);
                         drawable.setBounds(0, 0, size.x, size.y);
                         result.setDrawable(drawable);
                         result.setBounds(0, 0, size.x, size.y);
-                        textView.setText(textView.getText());
+                        mArticleView.setText(mArticleView.getText());
                     } catch (Exception e) {
-                        Log.e(TAG, "onPostExecute " + e.getMessage());
+                        Log.e(DEBUG_TAG, "onPostExecute " + e.getMessage());
                     }
                 }
 
@@ -306,11 +386,12 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
         }
 
         private Point getRelativeImageSize(BitmapDrawable drawable) {
-            Display display = getActivity().getWindowManager().getDefaultDisplay();
+
             Point size = new Point();
-            display.getSize(size);
+            mDisplay.getSize(size);
+
             // delete padding from screen size
-            float scale = getResources().getDisplayMetrics().density;
+            float scale = mResources.getDisplayMetrics().density;
             int paddingDpAsPixels = (int) (40*scale + 0.5f);
 
             size.x=size.x - paddingDpAsPixels;
@@ -319,7 +400,9 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
             return size;
         }
 
-
+        /**
+         *  BitmapDrawable for drawing images from news in textView
+         */
         class BitmapDrawablePlaceHolder extends BitmapDrawable {
 
             protected Drawable drawable;
@@ -330,78 +413,10 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
                     drawable.draw(canvas);
                 }
             }
-
             public void setDrawable(Drawable drawable) {
                 this.drawable = drawable;
             }
-
         }
-    }
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.menu_board_rider, menu);
-        super.onCreateOptionsMenu(menu, inflater);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_to_top) {
-            mScrollView.fullScroll(View.FOCUS_DOWN);
-        }
-        if (id == R.id.action_to_bottom) {
-            mScrollView.fullScroll(View.FOCUS_UP);
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-    public static void showNoConnectionDialog(Context ctx1)
-    {
-        final Context ctx = ctx1;
-        AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
-        builder.setCancelable(true);
-        builder.setMessage(R.string.no_connection);
-        builder.setTitle(R.string.no_connection_title);
-        builder.setPositiveButton(R.string.settings_button_text, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which)
-            {
-                ctx.startActivity(new Intent(Settings.ACTION_WIRELESS_SETTINGS));
-            }
-        });
-
-        builder.setNegativeButton(R.string.cancel_button_text, new DialogInterface.OnClickListener()
-        {
-            public void onClick(DialogInterface dialog, int which)
-            {
-                return;
-            }
-        });
-
-        builder.setOnCancelListener(new DialogInterface.OnCancelListener()
-        {
-            public void onCancel(DialogInterface dialog) {
-                return;
-            }
-        });
-
-        builder.show();
-    }
-    private class SaveOperation extends AsyncTask<Void, Void, Void> {
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            SugarORM.updateNews(mBoardNews);
-          return null;
-        }
-
-
-        @Override
-        protected void onProgressUpdate(Void... values) {}
     }
 
 }

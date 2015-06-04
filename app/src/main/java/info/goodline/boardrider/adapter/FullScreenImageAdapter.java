@@ -21,23 +21,34 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import goodline.info.boardrider.R;
 import info.goodline.boardrider.UI.TouchImageView;
 import info.goodline.boardrider.activity.ImageGalleryActivity;
+import info.goodline.boardrider.data.BoardNewsLab;
+import info.goodline.boardrider.fragment.NewsTopicFragment;
 import valleyapp.BoardNewsApplication;
 
 import static valleyapp.BoardNewsApplication.*;
 
-
+/**
+ *  Adapter for displaying images in FullScreenImageGallery
+ *  @see ImageGalleryActivity
+ *  @author  Sergey Baldin
+ */
 public class FullScreenImageAdapter extends PagerAdapter {
 
-    private final Resources resources;
-    private Activity mActivity;
-    private ArrayList<String> mImageLinks;
-    private LayoutInflater inflater;
-    private TouchImageView imgDisplay;
 
-    public FullScreenImageAdapter(ImageGalleryActivity imageGalleryActivity, ArrayList<String> imageLinksList, Resources resources) {
+    private Activity mActivity;
+    private LayoutInflater inflater;
+    /**
+     * ImageView with touch zoom support
+     */
+    private TouchImageView imgDisplay;
+    /**
+     *  List with image urls from content of news topic
+     */
+    private ArrayList<String> mImageLinks;
+
+    public FullScreenImageAdapter(ImageGalleryActivity imageGalleryActivity, ArrayList<String> imageLinksList) {
         this.mActivity = imageGalleryActivity;
         this.mImageLinks = imageLinksList;
-        this.resources = resources;
     }
 
     @Override
@@ -47,26 +58,25 @@ public class FullScreenImageAdapter extends PagerAdapter {
 
     @Override
     public boolean isViewFromObject(View view, Object object) {
-        return view == ((RelativeLayout) object);
+        return view == object;
     }
 
     @Override
     public Object instantiateItem(ViewGroup container, int position) {
-
         inflater = (LayoutInflater) mActivity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View viewLayout = inflater.inflate(R.layout.image_gallery_item, container,
-                false);
-
+        // inflate gallery item
+        View viewLayout = inflater.inflate(R.layout.image_gallery_item, container, false);
         imgDisplay = (TouchImageView) viewLayout.findViewById(R.id.imgDispImgGal);
+        // load image to item's ImageView
         loadImage(mImageLinks.get(position), imgDisplay);
-        ((ViewPager) container).addView(viewLayout);
+        container.addView(viewLayout);
 
         return viewLayout;
     }
 
     @Override
     public void destroyItem(ViewGroup container, int position, Object object) {
-        ((ViewPager) container).removeView((RelativeLayout) object);
+        container.removeView((RelativeLayout) object);
 
     }
 

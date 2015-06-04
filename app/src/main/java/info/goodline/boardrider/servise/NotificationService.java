@@ -23,6 +23,8 @@ import info.goodline.boardrider.activity.NewsListActivity;
 import info.goodline.boardrider.loader.NewsLoader;
 import goodline.info.boardrider.R;
 
+import static valleyapp.BoardNewsApplication.isOnline;
+
 
 public class NotificationService extends IntentService {
     private BoardNews mNewsFromBD;
@@ -53,7 +55,7 @@ public class NotificationService extends IntentService {
                             Log.d(DEBUG_TAG, "News received!");
                             sendNotif(reseivedNews);
                     }
-                }else if(NewsLoader.isOnline(getApplicationContext())){
+                }else if(isOnline(getApplicationContext())){
                     isFetchingResultSucces = mDataLoader.fetchLastNews();
                     if(isFetchingResultSucces){
                         Log.d(DEBUG_TAG, "News received!");

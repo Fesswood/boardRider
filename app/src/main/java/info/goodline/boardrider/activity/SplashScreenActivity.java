@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.os.Bundle;;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 
 import android.view.View;
@@ -17,7 +18,6 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -27,15 +27,21 @@ import info.goodline.boardrider.data.BoardNews;
 import info.goodline.boardrider.loader.NewsLoader;
 import goodline.info.boardrider.R;
 
+import static valleyapp.BoardNewsApplication.isOnline;
 
+/**
+ *  Activity for retrieve news topics from database or load from url
+ *  Do it in AsyncTaskLoader while SplashScreen is showing, after loading is completed starts {@link NewsListActivity}
+ *  @see info.goodline.boardrider.fragment.NewsListFragment
+ *  @author  Sergey Baldin
+ */
 public class SplashScreenActivity extends AppCompatActivity implements
         android.app.LoaderManager.LoaderCallbacks<ArrayList<BoardNews>>{
 
-    private ProgressBar mProgressBar;
     private Button mReloadBtn;
     private TextView mStatusTextView;
-    public static final  String NEWS_LIST="goodline.info.boardrider.news_list";
-    public static final  String SPLASH_HAS_NEWS="splashHasNews";
+    public static final  String NEWS_LIST="SplashScreenActivity.newsList";
+    public static final  String SPLASH_HAS_NEWS="SplashScreenActivity.splashHasNews";
 
     public void onAttachedToWindow() {
         super.onAttachedToWindow();
@@ -47,23 +53,24 @@ public class SplashScreenActivity extends AppCompatActivity implements
     public void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
-       getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                             WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_splash_creen);
-
-
-        mProgressBar = (ProgressBar) findViewById(R.id.data_progressBar);
         mReloadBtn = (Button) findViewById(R.id.reload_button);
         mStatusTextView = (TextView) findViewById(R.id.status_text);
         mReloadBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startLoading("Загружаем новости еще раз...");
+                startLoading(getResources().getString(R.string.load_data_again));
             }
         });
         StartAnimations();
-        startLoading("Загружаем Новости...");
+        startLoading(getResources().getString(R.string.load_data));
     }
+
+    /**
+     * Start Loading animation
+     */
     private void StartAnimations() {
         Animation anim = AnimationUtils.loadAnimation(this, R.anim.alpha);
         anim.reset();
@@ -76,25 +83,22 @@ public class SplashScreenActivity extends AppCompatActivity implements
         LinearLayout iv = (LinearLayout) findViewById(R.id.splash_content);
         iv.clearAnimation();
         iv.startAnimation(anim);
-
     }
 
+
     /**
-     * Starts loading the data
+     * Starts loading of news topics after 4 second
+     * @param message message which user see while loading is not finished
      */
     public void startLoading(String message) {
         mStatusTextView.setText(message);
-        getLoaderManager().initLoader(0, null, this);
-
-
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                getLoaderManager().initLoader(0, null, SplashScreenActivity.this);
+            }
+        }, 4000);
     }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-    }
-
 
     @Override
     public android.content.Loader<ArrayList<BoardNews>> onCreateLoader(int id, Bundle args) {
@@ -106,12 +110,16 @@ public class SplashScreenActivity extends AppCompatActivity implements
         if(data.size()==0){
             mReloadBtn.setVisibility(View.VISIBLE);
         }else{
-            Intent i = new Intent(SplashScreenActivity.this, NewsListActivity.class);
-            i.setAction(SPLASH_HAS_NEWS);
-            i.putExtra(NEWS_LIST, data);
-            startActivity(i);
-            finish();
+            showNewsListActivity(data);
         }
+    }
+
+    private void showNewsListActivity(ArrayList<BoardNews> data) {
+        Intent i = new Intent(SplashScreenActivity.this, NewsListActivity.class);
+        i.setAction(SPLASH_HAS_NEWS);
+        i.putExtra(NEWS_LIST, data);
+        startActivity(i);
+        finish();
     }
 
     @Override
@@ -121,7 +129,7 @@ public class SplashScreenActivity extends AppCompatActivity implements
 
 
     /**
-     * A custom Loader that loads all of the installed applications.
+     * A custom Loader that loads news for subsequent retrieve it to NewsListActivity
      */
     public static class BoardNewsLoader extends AsyncTaskLoader<ArrayList<BoardNews>> {
 
@@ -132,22 +140,22 @@ public class SplashScreenActivity extends AppCompatActivity implements
         }
 
 
-        @Override public ArrayList<BoardNews> loadInBackground() {
+        @Override
+        public ArrayList<BoardNews> loadInBackground() {
 
             final Context context = getContext();
             NewsLoader mNewsLoader = new NewsLoader("http://live.goodline.info/guest/page",context);
             boolean isResultCorrect = false;
 
             try {
+                // Try to load data from database
                 mNewsLoader.fetchNewsOffline();
                 if(mNewsLoader.getData().size()>0){
-
+                    // if data from database is not empty
+                    // mark flag that data is received
                     isResultCorrect=true;
-
-                }else if(NewsLoader.isOnline(context)){
-
+                }else if(isOnline(context)){
                     isResultCorrect = mNewsLoader.fetchFromInternet(1, true);
-
                 }
 
             } catch (ExecutionException e) {
@@ -155,6 +163,8 @@ public class SplashScreenActivity extends AppCompatActivity implements
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            // if data not empty return it
+            // otherwise return empty list
             if(isResultCorrect){
                return mNewsLoader.getData();
             }else{
@@ -247,8 +257,8 @@ public class SplashScreenActivity extends AppCompatActivity implements
          * with an actively loaded data set.
          */
         protected void onReleaseResources(ArrayList<BoardNews> boardNews) {
-            // For a simple List<> there is nothing to do.  For something
-            // like a Cursor, we would close it here.
+            // For a simple List<> there is nothing to do.
+            boardNews.clear();
         }
     }
 }

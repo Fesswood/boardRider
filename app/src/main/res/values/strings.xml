@@ -27,4 +27,6 @@
     <string name="title_activity_activity_image_gallery">Галерея</string>
 
     <string name="hello_world">Hello world!</string>
+    <string name="load_data_again">Загружаем новости еще раз...</string>
+    <string name="load_data">Загружаем Новости...</string>
 </resources>

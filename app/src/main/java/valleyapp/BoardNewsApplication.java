@@ -1,7 +1,13 @@
 package valleyapp;
 
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.provider.Settings;
+import android.support.v7.app.AlertDialog;
 import android.widget.ImageView;
 
 import com.android.volley.RequestQueue;
@@ -35,6 +41,7 @@ public class BoardNewsApplication extends com.orm.SugarApp {
         initImageLoader(this);
     }
 
+
     public synchronized static BoardNewsApplication getInstance() {
         return sInstance;
     }
@@ -67,5 +74,29 @@ public class BoardNewsApplication extends com.orm.SugarApp {
     {
         ImageLoader imageLoader = ImageLoader.getInstance();
         return  imageLoader.loadImageSync(url);
+    }
+    public static boolean isOnline(Context context) {
+        ConnectivityManager cm =
+                (ConnectivityManager)  context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        return netInfo != null && netInfo.isConnectedOrConnecting();
+    }
+    public static void showNoConnectionDialog(final Context context){
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);builder.setCancelable(true);
+        builder.setMessage(R.string.no_connection);
+        builder.setTitle(R.string.no_connection_title);
+        builder.setPositiveButton(R.string.settings_button_text, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which){
+                context.startActivity(new Intent(Settings.ACTION_WIRELESS_SETTINGS));
+            }
+        });builder.setNegativeButton(R.string.cancel_button_text, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                return;
+            }
+        });builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            public void onCancel(DialogInterface dialog) {
+                return;
+            }
+        });builder.show();
     }
 }

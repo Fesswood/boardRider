@@ -36,39 +36,45 @@ import info.goodline.boardrider.data.BoardNewsLab;
 import info.goodline.boardrider.servise.NotificationService;
 
 
+/**
+ * NewsListFragment main Fragment of app show news in ListView
+ * @author  Sergey Baldin
+ */
+public class NewsListFragment extends Fragment implements ListView.OnItemClickListener, SwipyRefreshLayout.OnRefreshListener {
 
-public class NewsListFragment extends Fragment implements ListView.OnItemClickListener {
+    public static final String TAG= NewsListFragment.class.getSimpleName();
+    public static final String PAGE_INDEX = "NewsListFragment.pageindex";
+    public static final String SELECTED_NEWS = "NewsListFragment.selected_news";
 
-    public static final String TAG= "NewsListFragment";
-    public static final String PAGE_INDEX = "goodline.info.boardrider.index";
-    public static final String SELECTED_NEWS = "goodline.info.boardrider.selected_news";
-
-    public static final String PREFS_NAME = "MyPrefsFile";
-    private boolean afterOnCreate= false;
-    private boolean mPrefsisNotificationEnabled = true;
+    public static final String PREFS_NAME = "BoardNewsPrefs";
+    /**
+     *  flag for load extra in OnResume after user clicked to notification
+     */
+    private boolean mFlagSkipFirstOnResume = false;
+    private boolean mPrefNotificationEnabled = true;
 
     private NewsRecordAdapter mAdapter;
     private NewsLoader mNewsLoader;
-    private String mBoardUrl;
     private SwipyRefreshLayout mSwipyRefreshLayout;
     private ListView mListView;
 
-    private AlarmManager mAlarmMgr;
-    private PendingIntent mStartServiceIntent;
+    private AlarmManager  mNotificationAlarmMgr;
+    private PendingIntent mStartNotificationServiceIntent;
+
+    private String mBoardUrl;
 
     public NewsListFragment() {
         mBoardUrl="http://live.goodline.info/guest/page";
     }
     @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-
-        SharedPreferences settings = getActivity().getSharedPreferences(PREFS_NAME, 0);
-        mPrefsisNotificationEnabled = settings.getBoolean("Notification", true);
-
-
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        SharedPreferences settings = getActivity().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        mPrefNotificationEnabled = settings.getBoolean("Notification", true);
+        if(mPrefNotificationEnabled){
+            startService();
+        }
         mNewsLoader= new NewsLoader(mBoardUrl,getActivity());
-
         if (savedInstanceState != null) {
             mNewsLoader.setPageIndex(savedInstanceState.getInt(PAGE_INDEX, 0));
         }else{
@@ -76,74 +82,107 @@ public class NewsListFragment extends Fragment implements ListView.OnItemClickLi
         }
         getActivity().setTitle("Новости");
         setHasOptionsMenu(true);
+    }
 
-        mSwipyRefreshLayout = (SwipyRefreshLayout) getView().findViewById(R.id.refresh);
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View inflateView = inflater.inflate(R.layout.fragment_board_rider, container, false);
+
+        mSwipyRefreshLayout = (SwipyRefreshLayout) inflateView.findViewById(R.id.refresh);
         mSwipyRefreshLayout.setDirection(SwipyRefreshLayoutDirection.BOTH);
-        mSwipyRefreshLayout.setOnRefreshListener(new SwipyRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh(SwipyRefreshLayoutDirection direction) {
-                Toast.makeText(getActivity(), R.string.refresh_started, Toast.LENGTH_SHORT).show();
-                mSwipyRefreshLayout.setRefreshing(true);
-                final SwipyRefreshLayoutDirection dir = direction;
-                mSwipyRefreshLayout.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        mSwipyRefreshLayout.setRefreshing(false);
-                        if (dir == SwipyRefreshLayoutDirection.BOTTOM) {
-                            fetch(mNewsLoader.getPageIndex(),true, true);
-                        } else {
-                            update();
-
-                        }
-
-                    }
-                }, 2000);
-            }
-        });
-
+        mSwipyRefreshLayout.setOnRefreshListener(this);
         mAdapter =  BoardNewsLab.get(getActivity()).getNewsRecordAdapter();
-
         checkExtras();
-        if(mPrefsisNotificationEnabled){
-            startService();
-        }
-        mListView = (ListView) getView().findViewById(R.id.news_list);
+        mListView = (ListView) inflateView.findViewById(R.id.news_list);
         mListView.setAdapter(mAdapter);
         mListView.setOnItemClickListener(this);
+        return inflateView;
     }
 
-    private void checkExtras() {
-        Intent intent1 = ((NewsListActivity) getActivity()).popLastIntent();
-        Bundle extras =intent1.getExtras();
-        if (extras != null) {
-            if (intent1.getAction().equals(SplashScreenActivity.SPLASH_HAS_NEWS)) {
-                ArrayList<BoardNews> loadedNews =(ArrayList<BoardNews>) extras.getSerializable(SplashScreenActivity.NEWS_LIST);
-                if (loadedNews != null) {
-                    mAdapter.addNewslist(loadedNews);
+    /**
+     * onRefresh listener for SwipeRefreshLayout ({@link #mSwipyRefreshLayout})
+     * if user make swipe to top call method {@link #update}  for current news
+     * if user make swipe to bottom call method {@link #fetch}  for news from the next page
+     * @param direction  direction of swipe, can be Buttom or Top
+     */
+    @Override
+    public void onRefresh(SwipyRefreshLayoutDirection direction) {
+        Toast.makeText(getActivity(), R.string.refresh_started, Toast.LENGTH_SHORT).show();
+        mSwipyRefreshLayout.setRefreshing(true);
+        final SwipyRefreshLayoutDirection dir = direction;
+        mSwipyRefreshLayout.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mSwipyRefreshLayout.setRefreshing(false);
+                if (dir == SwipyRefreshLayoutDirection.BOTTOM) {
+                    fetch(mNewsLoader.getPageIndex(),true, true);
                 } else {
-                    fetch(1, false, false);
+                    update();
                 }
-            }else if(intent1.getAction().equals(NotificationService.NOTI_HAS_NEWS)){
-                Bundle oldBundle = intent1.getBundleExtra(BoardNews.PACKAGE_CLASS);
-                BoardNews notiNews = (BoardNews) oldBundle.getSerializable(BoardNews.PACKAGE_CLASS);
-                if (notiNews !=null){
-                    if(mAdapter.getNewsList().get(0).compareTo(notiNews)==1){
-                        mAdapter.getNewsList().add(0, notiNews);
-                    }
-                    startViewPagerActivity(notiNews);
-                }
+            }
+        }, 1500);
+    }
+
+    /**
+     *  Pop last intent from activity stack get extra from it
+     *  if action of intent equal SplashScreenActivity.SPLASH_HAS_NEWS get data from splashScreen
+     *  if action of intent equal SplashScreenActivity.SPLASH_HAS_NEWS show news topic from notification
+     *  @see info.goodline.boardrider.activity.NewsListActivity
+     */
+    private void checkExtras() {
+        Intent intent = ((NewsListActivity) getActivity()).popLastIntent();
+        Bundle extras =intent.getExtras();
+        if (extras != null) {
+            String action = intent.getAction();
+            if (action.equals(SplashScreenActivity.SPLASH_HAS_NEWS)) {
+                getLoadedNewsFromSplashScreen(extras);
+            }else if(action.equals(NotificationService.NOTI_HAS_NEWS)){
+                showNewsFromNotification(intent);
             }
         }
     }
 
+    private void showNewsFromNotification(Intent intent) {
+        Bundle oldBundle = intent.getBundleExtra(BoardNews.PACKAGE_CLASS);
+        BoardNews notiNews = (BoardNews) oldBundle.getSerializable(BoardNews.PACKAGE_CLASS);
+        if (notiNews !=null){
+            if(mAdapter.getNewsList().get(0).compareTo(notiNews)==1){
+                mAdapter.getNewsList().add(0, notiNews);
+            }
+            startViewPagerActivity(notiNews);
+        }
+    }
+
+    private void getLoadedNewsFromSplashScreen(Bundle extras) {
+        ArrayList<BoardNews> loadedNews =(ArrayList<BoardNews>) extras.getSerializable(SplashScreenActivity.NEWS_LIST);
+        if (loadedNews != null) {
+            mAdapter.addNewslist(loadedNews);
+        } else {
+            fetch(1, false, false);
+        }
+    }
+
+    /**
+     * register the newsRecordAdapter in newsLoader
+     * and update database
+     * @see info.goodline.boardrider.loader.NewsLoader
+     */
     private void update() {
         mNewsLoader.setAdapter(mAdapter);
         mNewsLoader.updateAllDB();
     }
+
+    /**
+     * Try to fetch news from database if it cannot be done try to load news from internet
+     * @param startpage start page index
+     * @param isScrollNeeded flag for auto scrolling down after the next page was loaded
+     * @param isNextPageNeeded if true increase pageIndex
+     */
     private void fetch(int startpage, boolean isScrollNeeded, boolean isNextPageNeeded){
 
-        boolean isDataFromInetLoaded=false,
-                isDataFromBDLoaded=mNewsLoader.fechFromDB(startpage, isNextPageNeeded);
+        boolean isDataFromBDLoaded=mNewsLoader.fechFromDB(startpage, isNextPageNeeded);
+
         if(isDataFromBDLoaded){
             mAdapter.addNewslist(mNewsLoader.getData());
             if(isScrollNeeded){
@@ -173,12 +212,6 @@ public class NewsListFragment extends Fragment implements ListView.OnItemClickLi
         super.onSaveInstanceState(savedInstanceState);
         Log.i(TAG, "onSaveInstanceState");
         savedInstanceState.putInt(PAGE_INDEX, mNewsLoader.getPageIndex());
-
-    }
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_board_rider, container, false);
     }
 
     @Override
@@ -186,17 +219,17 @@ public class NewsListFragment extends Fragment implements ListView.OnItemClickLi
         super.onStop();
         SharedPreferences settings = getActivity().getSharedPreferences(PREFS_NAME, 0);
         SharedPreferences.Editor editor = settings.edit();
-        editor.putBoolean("Notification", mPrefsisNotificationEnabled);
+        editor.putBoolean("Notification", mPrefNotificationEnabled);
         editor.commit();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if(afterOnCreate){
+        if(mFlagSkipFirstOnResume){
             checkExtras();
         }
-        afterOnCreate=true;
+        mFlagSkipFirstOnResume =true;
     }
 
     @Override
@@ -215,7 +248,7 @@ public class NewsListFragment extends Fragment implements ListView.OnItemClickLi
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
         MenuItem checkable = menu.findItem(R.id.notification_state);
-        checkable.setChecked(mPrefsisNotificationEnabled);
+        checkable.setChecked(mPrefNotificationEnabled);
     }
 
     @Override
@@ -226,12 +259,8 @@ public class NewsListFragment extends Fragment implements ListView.OnItemClickLi
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_to_top) {
             mListView.smoothScrollToPosition(0);
         }
@@ -245,33 +274,31 @@ public class NewsListFragment extends Fragment implements ListView.OnItemClickLi
             fetch(1, false, true);
         }
         if (id == R.id.notification_state) {
-           mPrefsisNotificationEnabled=!mPrefsisNotificationEnabled;
-            if(mPrefsisNotificationEnabled){
+           mPrefNotificationEnabled =!mPrefNotificationEnabled;
+            if(mPrefNotificationEnabled){
                 startService();
             }else{
                 stopService();
             }
         }
-
         return super.onOptionsItemSelected(item);
     }
 
     private void stopService() {
-        if (mAlarmMgr!= null) {
-            mAlarmMgr.cancel(mStartServiceIntent);
+        if (mNotificationAlarmMgr != null) {
+            mNotificationAlarmMgr.cancel(mStartNotificationServiceIntent);
         }
     }
 
     private void startService() {
         Intent serviceIntent = new Intent(getActivity(),
                NotificationService.class);
-
         Context context = getActivity();
-
-        mStartServiceIntent = PendingIntent.getService(context, 0, serviceIntent, 0);
-
-        mAlarmMgr =(AlarmManager) context.getSystemService(context.ALARM_SERVICE);
-        mAlarmMgr.setInexactRepeating(AlarmManager.RTC_WAKEUP,
-                System.currentTimeMillis(), 1*60*1000, mStartServiceIntent);
+        mStartNotificationServiceIntent = PendingIntent.getService(context, 0, serviceIntent, 0);
+        mNotificationAlarmMgr =(AlarmManager) context.getSystemService(context.ALARM_SERVICE);
+        mNotificationAlarmMgr.setInexactRepeating(AlarmManager.RTC_WAKEUP,
+                System.currentTimeMillis(), 1 * 60 * 1000, mStartNotificationServiceIntent);
     }
+
+
 }

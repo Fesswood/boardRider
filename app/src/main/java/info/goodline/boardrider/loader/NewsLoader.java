@@ -29,6 +29,8 @@ import info.goodline.boardrider.data.BoardNews;
 import info.goodline.boardrider.sqllite.SugarORM;
 import valleyapp.BoardNewsApplication;
 
+import static valleyapp.BoardNewsApplication.isOnline;
+
 
 public class NewsLoader {
 
@@ -97,7 +99,7 @@ public class NewsLoader {
     }
 
     public void updateAllDB(){
-        if(!NewsLoader.isOnline(mContext)){
+        if(!isOnline(mContext)){
             mErrorCode=INTERNET_CONNECTION_ERROR;
             return;
         }
@@ -248,7 +250,6 @@ public class NewsLoader {
         try {
             doc = Jsoup.parse(HTML);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             Log.e(TAG, "" + e.getMessage(), e);
         }
         Element article = doc.select(".list-topic .topic.topic-type-topic.js-topic.out-topic").first();
@@ -298,13 +299,6 @@ public class NewsLoader {
             smallDesc.append("...");
         }
         return new BoardNews(articleTitle,smallDesc.toString(), imageUrl,articleUrl,articleDate);
-    }
-
-    public static boolean isOnline(Context context) {
-        ConnectivityManager cm =
-                (ConnectivityManager)  context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
     public int getErrorCode() {
