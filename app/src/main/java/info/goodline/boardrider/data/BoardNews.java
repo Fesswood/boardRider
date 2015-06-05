@@ -16,9 +16,11 @@ import java.util.Date;
 import java.util.Locale;
 
 /**
- * Created by Балдин Сергей on 06.05.2015.
+ *  Class for represent entity of News
+ *  used in {@link info.goodline.boardrider.fragment.NewsListFragment} for displaying list of news
+ *  used in {@link info.goodline.boardrider.fragment.NewsTopicFragment} for displaying content of news
+ *  @author  Sergey Baldin
  */
-
 public class BoardNews extends SugarRecord<BoardNews> implements Comparable<BoardNews>, Serializable {
   private  String mTitle;
   private  String mSmallDesc;
@@ -27,19 +29,20 @@ public class BoardNews extends SugarRecord<BoardNews> implements Comparable<Boar
   private  String mArticleContent;
   private long mTimeStamp;
   public static final  String PACKAGE_CLASS="info.goodline.boardrider.SugarRecord";
+    /**
+     * Date formater for output human readable date in the news list
+     */
   @Ignore
   public static DateFormat sJUD;
 
-    public BoardNews(String title, String smallDesc, String imageUrl, String articleUrl, long timeStamp) {
-        this.mSmallDesc=smallDesc;
-        this.mTitle = title;
-        this.mImageUrl = imageUrl;
-        this.mArticleUrl=articleUrl;
-        this.mTimeStamp=timeStamp;
-        this.mArticleContent="";
-        JUDInit();
-
-    }
+    /**
+     * Create new instance of news topic
+     * @param title Title of news
+     * @param smallDesc Small Description, used in the landscape orientation
+     * @param imageUrl Url of news thumbnail
+     * @param articleUrl Url of article
+     * @param stringDate string contains date, parsed into long mTimeStamp
+     */
     public BoardNews(String title, String smallDesc, String imageUrl, String articleUrl, String stringDate) {
         this.mSmallDesc=smallDesc;
         this.mTitle = title;
@@ -66,6 +69,10 @@ public class BoardNews extends SugarRecord<BoardNews> implements Comparable<Boar
         setArticleContent("");
         JUDInit();
     }
+
+    /**
+     * Initialize static SimpleDateFormater for displaying dates
+     */
     private void JUDInit() {
         if(sJUD==null){
             Locale russian = new Locale("ru");
@@ -81,6 +88,11 @@ public class BoardNews extends SugarRecord<BoardNews> implements Comparable<Boar
         }
     }
 
+    /**
+     * Compare dates of current news and another
+     * @param another news to compare
+     * @return like a compareTo() {@link Date}
+     */
     @Override
     public int compareTo(BoardNews another) {
         int result=-1;
@@ -152,12 +164,4 @@ public class BoardNews extends SugarRecord<BoardNews> implements Comparable<Boar
         return sJUD.format(d);
     }
 
-    public void setStringDate(String stringDate) {
-        try {
-            this.mTimeStamp=sJUD.parse(stringDate).getTime();
-        } catch (ParseException e) {
-            e.printStackTrace();
-            mTimeStamp=0;
-        }
-    }
 }

@@ -18,21 +18,31 @@ import java.util.concurrent.ExecutionException;
 
 
 import info.goodline.boardrider.data.BoardNews;
-import info.goodline.boardrider.fragment.NewsListFragment;
 import info.goodline.boardrider.activity.NewsListActivity;
 import info.goodline.boardrider.loader.NewsLoader;
 import goodline.info.boardrider.R;
 
 import static valleyapp.BoardNewsApplication.isOnline;
 
-
+/**
+ * Service check every 5 minute last news from database and news from internet
+ * if Servise detects fresh news, it sends notification to user,
+ * 2used in {@link info.goodline.boardrider.fragment.NewsListFragment}
+ * @author Sergey Baldin
+ */
 public class NotificationService extends IntentService {
+    private static final String TAG = NotificationService.class.getName() ;
+    /**
+     *  News for compare to fresh news from internet
+     */
     private BoardNews mNewsFromBD;
+    /**
+     *  NewsLoader provides news from database and internet
+     */
     private NewsLoader mDataLoader;
-    private static final String DEBUG_TAG = "NotificationService";
+    private static final String DEBUG_TAG = NotificationService.class.getName();
 
-    public static final String PARAM_RECEIVE_NEWS = "receiveNews";
-    public static final String NOTI_HAS_NEWS = "hasNewsNOTIPLEASEHELPME";
+    public static final String SERVICE_HAS_NEWS = "NotificationService.hasNews";
 
     public NotificationService() {
         super(DEBUG_TAG);
@@ -43,26 +53,24 @@ public class NotificationService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         try {
             mDataLoader=new NewsLoader("http://live.goodline.info/guest/page",getApplicationContext());
-            mDataLoader.fetchNewsOffline();
+            //fetch news to compare
+            mDataLoader.fetchFromDB();
             boolean isFetchingResultSucces;
-                if(mDataLoader.getData().size()>0){
-                    mNewsFromBD = mDataLoader.getData().get(0);
-                    isFetchingResultSucces = mDataLoader.fetchLastNews();
-                    if(isFetchingResultSucces){
-                        BoardNews reseivedNews = mDataLoader.getData().get(0);
-                        int isFetchingNewsLater = mNewsFromBD.compareTo(reseivedNews);
-                        if(isFetchingNewsLater==1){
-                            Log.d(DEBUG_TAG, "News received!");
-                            sendNotif(reseivedNews);
+
+             if(mDataLoader.getData().size()>0  && isOnline(getApplicationContext())){
+                 mNewsFromBD = mDataLoader.getData().get(0);
+                 //fetch fresh news
+                 isFetchingResultSucces = mDataLoader.fetchLastNews();
+                 if(isFetchingResultSucces){
+                     BoardNews receivedNews = mDataLoader.getData().get(0);
+                     int isFetchingNewsLater = mNewsFromBD.compareTo(receivedNews);
+                     // if news from internet fresher then mNewsFromBD send notification to user
+                     if(isFetchingNewsLater==1){
+                         Log.d(DEBUG_TAG, "News received!");
+                         sendNotification(receivedNews);
                     }
-                }else if(isOnline(getApplicationContext())){
-                    isFetchingResultSucces = mDataLoader.fetchLastNews();
-                    if(isFetchingResultSucces){
-                        Log.d(DEBUG_TAG, "News received!");
-                        sendNotif(mDataLoader.getData().get(0));
-                    }
-                }
-            }
+                 }
+             }
         } catch (ExecutionException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -70,26 +78,20 @@ public class NotificationService extends IntentService {
         }
     }
 
+    /**
+     * Sends notification to user
+     * @param receiveNews News to send in notification
+     */
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    private void sendNotif(BoardNews receiveNews) {
+    private void sendNotification(BoardNews receiveNews) {
 
-
-        Bundle bundle = new Bundle();
-        bundle.putSerializable(BoardNews.PACKAGE_CLASS, receiveNews);
-
-
-
-        Intent intent = new Intent().setClass(this, NewsListActivity.class);
-        intent.setAction(NOTI_HAS_NEWS);
-        intent.putExtra(BoardNews.PACKAGE_CLASS, bundle);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent pIntent =  PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pIntent = prepareIntent(receiveNews);
 
         Notification notification  = new Notification.Builder(this)
                 .setContentTitle(receiveNews.getTitle())
                 .setContentText(receiveNews.getStringDate())
                 .setSmallIcon(R.drawable.ic_stat_name)
-                .setLargeIcon(getNewsImage(receiveNews.getImageUrl()))
+                .setLargeIcon(loadImageBitmap(receiveNews.getImageUrl()))
                 .setContentIntent(pIntent)
                 .setAutoCancel(true).build();
 
@@ -97,19 +99,37 @@ public class NotificationService extends IntentService {
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         notificationManager.notify(0, notification);
     }
-    private Bitmap getNewsImage(String url){
+
+    /**
+     * Puts news to bundle, prepare intent with it
+     * @param receiveNews News to send in notification
+     */
+    private PendingIntent prepareIntent(BoardNews receiveNews) {
+        Bundle bundle = new Bundle();
+        bundle.putSerializable(BoardNews.PACKAGE_CLASS, receiveNews);
+
+        Intent intent = new Intent().setClass(this, NewsListActivity.class);
+        intent.setAction(SERVICE_HAS_NEWS);
+        intent.putExtra(BoardNews.PACKAGE_CLASS, bundle);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+    /**
+     * Load image from url and create bitmap
+     * @param url url of image
+     * @return bitmap of image
+     */
+    private Bitmap loadImageBitmap(String url){
         Bitmap contactPic = null;
-
-        final String getOnlinePic = url;
-
         try {
-            contactPic= Picasso.with(this).load(getOnlinePic)
+            contactPic= Picasso.with(this).load(url)
                     .resize(100, 100)
                     .placeholder(R.drawable.image_polyfill)
                     .error(R.drawable.image_polyfill)
                     .get();
         } catch (IOException e) {
-            e.printStackTrace();
+          Log.d(TAG, e.getMessage());
         }
         return  contactPic;
     }

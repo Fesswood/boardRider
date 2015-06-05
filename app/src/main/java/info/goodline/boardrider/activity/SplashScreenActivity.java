@@ -149,7 +149,7 @@ public class SplashScreenActivity extends AppCompatActivity implements
 
             try {
                 // Try to load data from database
-                mNewsLoader.fetchNewsOffline();
+                mNewsLoader.fetchFromDB();
                 if(mNewsLoader.getData().size()>0){
                     // if data from database is not empty
                     // mark flag that data is received

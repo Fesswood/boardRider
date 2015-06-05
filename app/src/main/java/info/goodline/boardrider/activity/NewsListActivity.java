@@ -19,7 +19,7 @@ public class NewsListActivity extends AppCompatActivity {
     /**
      * Stack of intents
      * contains intent with action equal SPLASH_HAS_NEWS from SplashScreenActivity
-     * or NOTI_HAS_NEWS from NotificationService
+     * or SERVICE_HAS_NEWS from NotificationService
      */
     private Stack<Intent> mIntentStack;
 
@@ -33,13 +33,13 @@ public class NewsListActivity extends AppCompatActivity {
 
     /**
      * Push new Intent to stack if it's action equals SPLASH_HAS_NEWS from SplashScreenActivity
-     * or NOTI_HAS_NEWS from NotificationService
+     * or SERVICE_HAS_NEWS from NotificationService
      * @param intent any intent
      */
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        if(intent.getAction()== SplashScreenActivity.SPLASH_HAS_NEWS || intent.getAction()== info.goodline.boardrider.servise.NotificationService.NOTI_HAS_NEWS){
+        if(intent.getAction()== SplashScreenActivity.SPLASH_HAS_NEWS || intent.getAction()== info.goodline.boardrider.servise.NotificationService.SERVICE_HAS_NEWS){
             mIntentStack.push(intent);
         }
 

@@ -27,6 +27,16 @@ import android.widget.ImageView;
 import android.widget.OverScroller;
 import android.widget.Scroller;
 
+/**
+ * Extends Android ImageView to include pinch zooming, panning, fling and double tap zoom.
+ * https://github.com/MikeOrtiz/TouchImageView
+ * By: Michael Ortiz
+ * Updated By: Patrick Lackemacher
+ * Updated By: Babay88
+ * Updated By: @ipsilondev
+ * Updated By: hank-cp
+ * Updated By: singpolyma
+ */
 public class TouchImageView extends ImageView {
 
     private static final String DEBUG = "DEBUG";

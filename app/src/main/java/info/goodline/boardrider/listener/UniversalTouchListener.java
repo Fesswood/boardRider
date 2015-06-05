@@ -15,7 +15,10 @@ import java.util.List;
 
 import info.goodline.boardrider.fragment.NewsTopicFragment;
 
-
+/**
+ *  Listener for touching events on snap of news topic content used in {@link NewsTopicFragment}
+ *  Interacts with {@link ImageSpan} after touching it sends message to Handler with message IMAGE_CLICK
+ */
 public class UniversalTouchListener implements View.OnTouchListener{
 
     private static final String TAG = UniversalTouchListener.class.getSimpleName();
@@ -24,36 +27,41 @@ public class UniversalTouchListener implements View.OnTouchListener{
     private Handler mHandler;
 
     public UniversalTouchListener(Handler mHandler) {
-
         this.mHandler = mHandler;
         mSpanClassList=new ArrayList<>();
     }
 
-    public void addClass(Class spanClass)
-    {
+    /**
+     * add class only interested to touch span
+     * @param spanClass
+     */
+    public void addClass(Class spanClass) {
         mSpanClassList.add(spanClass);
     }
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        TextView widget = (TextView) v;
+        TextView touchedView = (TextView) v;
         int action = event.getAction();
+        /**
+         *  react on touch down and up events
+         */
         if (action == MotionEvent.ACTION_UP ||
                 action == MotionEvent.ACTION_DOWN) {
             int x = (int) event.getX();
             int y = (int) event.getY();
 
-            x -= widget.getTotalPaddingLeft();
-            y -= widget.getTotalPaddingTop();
+            x -= touchedView.getTotalPaddingLeft();
+            y -= touchedView.getTotalPaddingTop();
 
-            x += widget.getScrollX();
-            y += widget.getScrollY();
+            x += touchedView.getScrollX();
+            y += touchedView.getScrollY();
 
-            Layout layout = widget.getLayout();
+            Layout layout = touchedView.getLayout();
             int line = layout.getLineForVertical(y);
             int off = layout.getOffsetForHorizontal(line, x);
 
-            CharSequence text = widget.getText();
+            CharSequence text = touchedView.getText();
             Spannable stext = Spannable.Factory.getInstance().newSpannable(text);
 
 

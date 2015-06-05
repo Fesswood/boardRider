@@ -1,28 +1,19 @@
 package info.goodline.boardrider.fragment;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Point;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
-import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
-import android.support.v7.app.AlertDialog;
 import android.text.Html;
 import android.text.style.ImageSpan;
 import android.text.style.URLSpan;
 import android.util.Log;
-import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -50,13 +41,13 @@ import goodline.info.boardrider.R;
 import info.goodline.boardrider.activity.ImageGalleryActivity;
 import info.goodline.boardrider.data.BoardNews;
 import info.goodline.boardrider.listener.UniversalTouchListener;
-import info.goodline.boardrider.loader.NewsLoader;
 import info.goodline.boardrider.sqllite.SugarORM;
+import info.goodline.boardrider.utils.HtmlTagHandler;
+import info.goodline.boardrider.utils.NewsTopicImageGetter;
 import valleyapp.BoardNewsApplication;
 
 import static valleyapp.BoardNewsApplication.isOnline;
 import static valleyapp.BoardNewsApplication.loadImage;
-import static valleyapp.BoardNewsApplication.loadImageAsync;
 import static valleyapp.BoardNewsApplication.showNoConnectionDialog;
 
 /**
@@ -75,7 +66,7 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
     private ScrollView mScrollView;
     private ImageView mTitleImageView;
     private TextView mTitleView;
-    private TextView mArticleView;
+    private TextView mNewsTopicView;
     private TextView mWatchersView;
     private TextView mLinkToSiteView;
 
@@ -108,11 +99,6 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        mNewsTopicImageGetter =  new NewsTopicImageGetter(
-                Resources.getSystem(),
-                getActivity().getWindowManager().getDefaultDisplay()
-        );
         if (getArguments() != null) {
             mBoardNews = (BoardNews) getArguments().getSerializable(BOARD_NEWS_ENTRY);
         }
@@ -126,7 +112,7 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
         mScrollView     = (ScrollView)fragmentView.findViewById(R.id.scroll_view);
         mTitleImageView = (ImageView) fragmentView.findViewById(R.id.title_image);
         mTitleView      = (TextView)  fragmentView.findViewById(R.id.title_view);
-        mArticleView    = (TextView)  fragmentView.findViewById(R.id.article_content);
+        mNewsTopicView = (TextView)  fragmentView.findViewById(R.id.article_content);
         mWatchersView   = (TextView)  fragmentView.findViewById(R.id.watchers_view);
         mLinkToSiteView = (TextView)  fragmentView.findViewById(R.id.link);
         mLinkToSiteView.setOnClickListener(this);
@@ -136,9 +122,11 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
         initializeHandler();
         fetchArticle();
         attachTouchListener();
-
+        initializeGetters();
         return fragmentView;
     }
+
+
 
     @Override
     public void onDetach() {
@@ -227,11 +215,23 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
             }
         };
     }
+
+    /**
+     * initialize ImageGetter and TagGetter for putting html into {@link #mNewsTopicView}
+     */
+    private void initializeGetters() {
+        mNewsTopicImageGetter =  new NewsTopicImageGetter(
+                Resources.getSystem(),
+                getActivity().getWindowManager().getDefaultDisplay(),
+                mImageUrlsLinks,
+                mNewsTopicView
+        );
+    }
     private void attachTouchListener() {
         UniversalTouchListener universalTouchListener = new UniversalTouchListener(mOnSpanClickHandler);
         universalTouchListener.addClass(ImageSpan.class);
         universalTouchListener.addClass(URLSpan.class);
-        mArticleView.setOnTouchListener(universalTouchListener);
+        mNewsTopicView.setOnTouchListener(universalTouchListener);
     }
 
     /**
@@ -245,7 +245,7 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
         if(!isOnline(context) && mBoardNews.getArticleContent().length()==0){
 
             showNoConnectionDialog(context);
-            mArticleView.setText(mBoardNews.getSmallDesc());
+            mNewsTopicView.setText(mBoardNews.getSmallDesc());
 
         }else if(isOnline(context)){
 
@@ -253,9 +253,9 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
 
         }else if(mBoardNews.getArticleContent().length()>0){
 
-            mArticleView.setText(Html.fromHtml(mBoardNews.getArticleContent()
-                                               ,mNewsTopicImageGetter
-                                               ,null));
+            mNewsTopicView.setText(Html.fromHtml(mBoardNews.getArticleContent()
+                    , mNewsTopicImageGetter
+                    , new HtmlTagHandler()));
         }
 
     }
@@ -269,7 +269,7 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        parseAndSetArticle(response);
+                        parseTopicNews(response);
                     }
                 }, new Response.ErrorListener() {
             @Override
@@ -282,11 +282,11 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
     }
 
     /**
-     * Parse html and set it to textView (@link #mArticleView) and count of viewer
+     * Parse html and set it to textView (@link #mNewsTopicView) and count of viewer
      * after that if news topic doesn't  contain content in database, save it to database
      * @param HTML string with html content of news
      */
-    private void parseAndSetArticle(String HTML){
+    private void parseTopicNews(String HTML){
          Document doc =null;
         try {
             doc = Jsoup.parse(HTML);
@@ -297,7 +297,7 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
         String articleHTML=article.html();
         Elements watchers =  doc.select(".topic-info-viewers");
         mWatchersView.setText(" " + watchers.text());
-        mArticleView.setText(Html.fromHtml(articleHTML, mNewsTopicImageGetter, null));
+        mNewsTopicView.setText(Html.fromHtml(articleHTML, mNewsTopicImageGetter, new HtmlTagHandler()));
         if(mBoardNews.getArticleContent().length()==0){
             mBoardNews.setArticleContent("" + articleHTML);
             new SaveOperation().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, null);
@@ -322,101 +322,5 @@ public class NewsTopicFragment extends Fragment implements TextView.OnClickListe
           @Override
        protected void onProgressUpdate(Void... values) {}
    }
-
-    /**
-     * ImageGetter for loading images in news topic
-     *
-     * NewsTopicImageGetter used for downloading images from news html to canvas of news TextView.
-     * @see info.goodline.boardrider.fragment.NewsTopicFragment
-     * Also while the AsyncTask working add every image url to ArrayList for subsequent creating fullscreen gallery.
-     * @see info.goodline.boardrider.activity.ImageGalleryActivity
-     * @author  Sergey Baldin
-     *
-     */
-    public class NewsTopicImageGetter implements Html.ImageGetter {
-
-
-        private String DEBUG_TAG = NewsTopicImageGetter.class.getSimpleName();
-        private Display mDisplay;
-        private Resources mResources;
-
-        /**
-         *  Create instance of NewsTopicImageGetter
-         * @param resources reference to app resources
-         * @param display  reference to display for getting size of screen
-         */
-        public NewsTopicImageGetter(final Resources resources,  Display display ) {
-            this.mResources = resources;
-            this.mDisplay = display;
-        }
-
-        @Override
-        public Drawable getDrawable(final String source) {
-            final BitmapDrawablePlaceHolder result = new BitmapDrawablePlaceHolder();
-
-            new AsyncTask<Void, Void, Bitmap>() {
-
-                @Override
-                protected Bitmap doInBackground(final Void... meh) {
-                    try {
-                        mImageUrlsLinks.add(source);
-                        return  loadImageAsync(source);
-                    } catch (Exception e) {
-                        Log.e(DEBUG_TAG, "doInBackground " + e.getMessage());
-                        return null;
-                    }
-                }
-
-                @Override
-                protected void onPostExecute(final Bitmap bitmap) {
-                    try {
-                        final BitmapDrawable drawable = new BitmapDrawable(mResources, bitmap);
-                        Point size = getRelativeImageSize(drawable);
-                        drawable.setBounds(0, 0, size.x, size.y);
-                        result.setDrawable(drawable);
-                        result.setBounds(0, 0, size.x, size.y);
-                        mArticleView.setText(mArticleView.getText());
-                    } catch (Exception e) {
-                        Log.e(DEBUG_TAG, "onPostExecute " + e.getMessage());
-                    }
-                }
-
-            }.execute((Void) null);
-            return result;
-        }
-
-        private Point getRelativeImageSize(BitmapDrawable drawable) {
-
-            Point size = new Point();
-            mDisplay.getSize(size);
-
-            // delete padding from screen size
-            float scale = mResources.getDisplayMetrics().density;
-            int paddingDpAsPixels = (int) (40*scale + 0.5f);
-
-            size.x=size.x - paddingDpAsPixels;
-            double ratio = ((float) size.x) / (float) drawable.getIntrinsicWidth();
-            size.y = (int) (ratio * drawable.getIntrinsicHeight());
-            return size;
-        }
-
-        /**
-         *  BitmapDrawable for drawing images from news in textView
-         */
-        class BitmapDrawablePlaceHolder extends BitmapDrawable {
-
-            protected Drawable drawable;
-
-            @Override
-            public void draw(final Canvas canvas) {
-                if (drawable != null) {
-                    drawable.draw(canvas);
-                }
-            }
-            public void setDrawable(Drawable drawable) {
-                this.drawable = drawable;
-            }
-        }
-    }
 
 }

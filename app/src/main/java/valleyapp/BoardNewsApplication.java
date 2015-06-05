@@ -24,7 +24,9 @@ import com.nostra13.universalimageloader.core.display.SimpleBitmapDisplayer;
 import goodline.info.boardrider.R;
 
 /**
- * Created by Балдин Сергей on 06.05.2015.
+ * Application class for initialize {@link Volley}, {@link ImageLoader} and {@link info.goodline.boardrider.sqllite.SugarORM}
+ * Also contain static method for load images, checking internet connection, showing no connection dialog
+ * @author Sergey Baldin
  */
 public class BoardNewsApplication extends com.orm.SugarApp {
 
@@ -35,7 +37,6 @@ public class BoardNewsApplication extends com.orm.SugarApp {
     @Override
     public void onCreate() {
         super.onCreate();
-
         mRequestQueue = Volley.newRequestQueue(this);
         sInstance = this;
         initImageLoader(this);
@@ -50,6 +51,12 @@ public class BoardNewsApplication extends com.orm.SugarApp {
         return mRequestQueue;
     }
 
+
+    /**
+     * Initialize {@link ImageLoader} with default options,
+     * which further can be accessed by ImageLoader.getInstance()
+     * @param context Current context
+     */
     public static void initImageLoader(Context context) {
 
         DisplayImageOptions defaultOptions = new DisplayImageOptions.Builder()
@@ -65,22 +72,44 @@ public class BoardNewsApplication extends com.orm.SugarApp {
 
         ImageLoader.getInstance().init(config);
     }
+
+    /**
+     * Load image from input url to input imageView
+     * @param url image url
+     * @param imageView view  placing image
+     */
     public static void loadImage(String url, ImageView imageView) {
         ImageLoader imageLoader = ImageLoader.getInstance();
         imageLoader.displayImage(url, imageView);
     }
 
-    public static Bitmap loadImageAsync(String url)
+    /**
+     * Load image from input url to bitmap
+     * @param url image url
+     * @return Bitmap of image
+     */
+    public static Bitmap loadImage(String url)
     {
         ImageLoader imageLoader = ImageLoader.getInstance();
         return  imageLoader.loadImageSync(url);
     }
+
+    /**
+     * Check internet connection
+     * @param context current context
+     * @return true if device has internet and false otherwise
+     */
     public static boolean isOnline(Context context) {
         ConnectivityManager cm =
                 (ConnectivityManager)  context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
         return netInfo != null && netInfo.isConnectedOrConnecting();
     }
+
+    /**
+     * Show dialog with offer enable internet connection
+     * @param context current context
+     */
     public static void showNoConnectionDialog(final Context context){
         AlertDialog.Builder builder = new AlertDialog.Builder(context);builder.setCancelable(true);
         builder.setMessage(R.string.no_connection);
@@ -89,14 +118,8 @@ public class BoardNewsApplication extends com.orm.SugarApp {
             public void onClick(DialogInterface dialog, int which){
                 context.startActivity(new Intent(Settings.ACTION_WIRELESS_SETTINGS));
             }
-        });builder.setNegativeButton(R.string.cancel_button_text, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                return;
-            }
-        });builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-            public void onCancel(DialogInterface dialog) {
-                return;
-            }
-        });builder.show();
+        });
+        builder.setNegativeButton(R.string.cancel_button_text, null);
+        builder.show();
     }
 }

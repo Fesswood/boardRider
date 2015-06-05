@@ -5,10 +5,13 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout;
+
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -47,6 +50,7 @@ public class NewsListFragment extends Fragment implements ListView.OnItemClickLi
     public static final String SELECTED_NEWS = "NewsListFragment.selected_news";
 
     public static final String PREFS_NAME = "BoardNewsPrefs";
+    public static final int NEWS_ARE_LOADED = 100;
     /**
      *  flag for load extra in OnResume after user clicked to notification
      */
@@ -78,7 +82,7 @@ public class NewsListFragment extends Fragment implements ListView.OnItemClickLi
         if (savedInstanceState != null) {
             mNewsLoader.setPageIndex(savedInstanceState.getInt(PAGE_INDEX, 0));
         }else{
-            mNewsLoader.setPageIndex(2);
+            mNewsLoader.setPageIndex(1);
         }
         getActivity().setTitle("Новости");
         setHasOptionsMenu(true);
@@ -137,7 +141,7 @@ public class NewsListFragment extends Fragment implements ListView.OnItemClickLi
             String action = intent.getAction();
             if (action.equals(SplashScreenActivity.SPLASH_HAS_NEWS)) {
                 getLoadedNewsFromSplashScreen(extras);
-            }else if(action.equals(NotificationService.NOTI_HAS_NEWS)){
+            }else if(action.equals(NotificationService.SERVICE_HAS_NEWS)){
                 showNewsFromNotification(intent);
             }
         }
@@ -170,7 +174,7 @@ public class NewsListFragment extends Fragment implements ListView.OnItemClickLi
      */
     private void update() {
         mNewsLoader.setAdapter(mAdapter);
-        mNewsLoader.updateAllDB();
+        mNewsLoader.registerRequestForUpdateAllDB();
     }
 
     /**
@@ -181,7 +185,7 @@ public class NewsListFragment extends Fragment implements ListView.OnItemClickLi
      */
     private void fetch(int startpage, boolean isScrollNeeded, boolean isNextPageNeeded){
 
-        boolean isDataFromBDLoaded=mNewsLoader.fechFromDB(startpage, isNextPageNeeded);
+        boolean isDataFromBDLoaded=mNewsLoader.fetchFromDB(startpage, isNextPageNeeded);
 
         if(isDataFromBDLoaded){
             mAdapter.addNewslist(mNewsLoader.getData());
@@ -197,13 +201,31 @@ public class NewsListFragment extends Fragment implements ListView.OnItemClickLi
         }
         else{
             try {
-                mNewsLoader.fetchFromInternetWithListener(startpage,isNextPageNeeded,isScrollNeeded,mAdapter,mListView);
+                Handler scrollHandler = initializeHandler();
+                mNewsLoader.registerInternetRequestWithListener(startpage, scrollHandler, isNextPageNeeded, mAdapter);
             } catch (ExecutionException e) {
                 e.printStackTrace();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    /**
+     * Initialize handler with handle message from {@link NewsLoader} request listener
+     * @return handler with override handleMessage method for scrolling after downloading news
+     */
+    private Handler initializeHandler() {
+        return new Handler()  {
+            public void handleMessage(Message msg)
+            {
+                if (msg.what == NEWS_ARE_LOADED)
+                {
+                    int nextViewPosition= (mListView.getLastVisiblePosition() - mListView.getFirstVisiblePosition())+1+mListView.getLastVisiblePosition();
+                    mListView.smoothScrollToPosition(nextViewPosition);
+                }
+            }
+        };
     }
 
 
@@ -297,7 +319,7 @@ public class NewsListFragment extends Fragment implements ListView.OnItemClickLi
         mStartNotificationServiceIntent = PendingIntent.getService(context, 0, serviceIntent, 0);
         mNotificationAlarmMgr =(AlarmManager) context.getSystemService(context.ALARM_SERVICE);
         mNotificationAlarmMgr.setInexactRepeating(AlarmManager.RTC_WAKEUP,
-                System.currentTimeMillis(), 1 * 60 * 1000, mStartNotificationServiceIntent);
+                System.currentTimeMillis(), 300 * 60 * 1000, mStartNotificationServiceIntent);
     }
 
 

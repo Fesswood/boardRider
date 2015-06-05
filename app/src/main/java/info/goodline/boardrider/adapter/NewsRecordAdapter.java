@@ -20,7 +20,7 @@ import info.goodline.boardrider.data.BoardNews;
 
 /**
  * NewsRecordAdapter displaying news in list item into {@link info.goodline.boardrider.fragment.NewsListFragment}
- *
+ *  @author  Sergey Baldin
  */
 public class NewsRecordAdapter extends ArrayAdapter<BoardNews> {
     /**
