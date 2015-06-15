@@ -2,7 +2,6 @@ package info.goodline.boardrider.adapter;
 
 import android.content.Context;
 import android.content.res.Configuration;
-import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +22,7 @@ import info.goodline.boardrider.data.BoardNews;
  *  @author  Sergey Baldin
  */
 public class NewsRecordAdapter extends ArrayAdapter<BoardNews> {
+    private final Picasso mPicassoLoader;
     /**
      * List of news topics
      */
@@ -35,6 +35,7 @@ public class NewsRecordAdapter extends ArrayAdapter<BoardNews> {
         mNewslist=new ArrayList<>();
         mContext=context;
         mInflater= (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        mPicassoLoader=Picasso.with(mContext);
     }
 
     @Override
@@ -86,8 +87,10 @@ public class NewsRecordAdapter extends ArrayAdapter<BoardNews> {
      */
     private void displayNewsImage(BoardNews newsItem, ImageView imageView) {
         if(!newsItem.getImageUrl().isEmpty()){
-            ImageLoader.getInstance().displayImage(newsItem.getImageUrl(), imageView);
-
+            //ImageLoader.getInstance().displayImage(newsItem.getImageUrl(), imageView);
+            mPicassoLoader.load(newsItem.getImageUrl())
+                        .resizeDimen(R.dimen.news_thumb_image_size, R.dimen.news_thumb_image_size)
+                        .into(imageView);
         }else{
            imageView.setImageResource(R.drawable.image_polyfill);
         }

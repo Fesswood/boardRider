@@ -155,7 +155,7 @@ public class SplashScreenActivity extends AppCompatActivity implements
                     // mark flag that data is received
                     isResultCorrect=true;
                 }else if(isOnline(context)){
-                    isResultCorrect = mNewsLoader.fetchFromInternet(1, true);
+                    isResultCorrect = mNewsLoader.fetchFromInternet(0, true);
                 }
 
             } catch (ExecutionException e) {

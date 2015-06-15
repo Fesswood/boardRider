@@ -159,7 +159,7 @@ public class NewsLoader implements Response.Listener<String>,Response.ErrorListe
         StringRequest stringRequest;
         for (int i=startpage; i<mPageIndex+1; i++){
             RequestFuture<String> future = RequestFuture.newFuture();
-            stringRequest = new StringRequest(Request.Method.GET, mBoardUrl+i, future, future);
+            stringRequest = new StringRequest(Request.Method.GET, mBoardUrl+(i+1), future, future);
 
             BoardNewsApplication.getInstance().getRequestQueue().add(stringRequest);
             String response = null;
